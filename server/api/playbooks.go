@@ -28,13 +28,15 @@ type PlaybookHandler struct {
 }
 
 // NewPlaybookHandler returns a new playbook api handler
-func NewPlaybookHandler(router *mux.Router, playbookService playbook.Service, api *pluginapi.Client, log bot.Logger, config config.Service) *PlaybookHandler {
+func NewPlaybookHandler(router *mux.Router, playbookService playbook.Service, api *pluginapi.Client, log bot.Logger, configService config.Service) *PlaybookHandler {
 	handler := &PlaybookHandler{
 		playbookService: playbookService,
 		pluginAPI:       api,
 		log:             log,
-		config:          config,
+		config:          configService,
 	}
+
+	e20Middleware := E20LicenseRequired{config}
 
 	playbooksRouter := router.PathPrefix("/playbooks").Subrouter()
 	playbooksRouter.HandleFunc("", handler.createPlaybook).Methods(http.MethodPost)
@@ -42,6 +44,7 @@ func NewPlaybookHandler(router *mux.Router, playbookService playbook.Service, ap
 	playbooksRouter.HandleFunc("/autocomplete", handler.getPlaybooksAutoComplete).Methods(http.MethodGet)
 
 	playbookRouter := playbooksRouter.PathPrefix("/{id:[A-Za-z0-9]+}").Subrouter()
+	playbookRouter.Use(e20Middleware.Middleware)
 	playbookRouter.HandleFunc("", handler.getPlaybook).Methods(http.MethodGet)
 	playbookRouter.HandleFunc("", handler.updatePlaybook).Methods(http.MethodPut)
 	playbookRouter.HandleFunc("", handler.deletePlaybook).Methods(http.MethodDelete)
