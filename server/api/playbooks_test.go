@@ -112,6 +112,7 @@ func TestPlaybooks(t *testing.T) {
 	var mockCtrl *gomock.Controller
 	var handler *Handler
 	var logger *mock_poster.MockLogger
+	var poster *mock_poster.MockPoster
 	var configService *mock_config.MockService
 	var playbookService *mock_playbook.MockService
 	var pluginAPI *plugintest.API
@@ -143,10 +144,12 @@ func TestPlaybooks(t *testing.T) {
 		pluginAPI = &plugintest.API{}
 		client = pluginapi.NewClient(pluginAPI)
 		logger = mock_poster.NewMockLogger(mockCtrl)
-		NewPlaybookHandler(handler.APIRouter, playbookService, client, logger, configService)
+		poster = mock_poster.NewMockPoster(mockCtrl)
+		NewPlaybookHandler(handler.APIRouter, playbookService, client, poster, logger, configService)
 
 		configService.EXPECT().
 			IsLicensed().
+			AnyTimes().
 			Return(true)
 
 		configService.EXPECT().
@@ -156,7 +159,7 @@ func TestPlaybooks(t *testing.T) {
 			})
 	}
 
-	t.Run("create playbook, unlicensed", func(t *testing.T) {
+	t.Run("create playbook, unlicensed with one pre-existing playbook in the team", func(t *testing.T) {
 		mockCtrl = gomock.NewController(t)
 		configService = mock_config.NewMockService(mockCtrl)
 		handler = NewHandler(configService)
@@ -164,11 +167,14 @@ func TestPlaybooks(t *testing.T) {
 		pluginAPI = &plugintest.API{}
 		client = pluginapi.NewClient(pluginAPI)
 		logger = mock_poster.NewMockLogger(mockCtrl)
-		NewPlaybookHandler(handler.APIRouter, playbookService, client, logger, configService)
+		poster = mock_poster.NewMockPoster(mockCtrl)
+		NewPlaybookHandler(handler.APIRouter, playbookService, client, poster, logger, configService)
 
 		configService.EXPECT().
 			IsLicensed().
 			Return(false)
+
+		playbookService.EXPECT().GetNumPlaybooksForTeam(playbooktest.TeamID).Return(1, nil)
 
 		testrecorder := httptest.NewRecorder()
 		testreq, err := http.NewRequest("POST", "/api/v0/playbooks", jsonPlaybookReader(playbooktest))
@@ -181,6 +187,49 @@ func TestPlaybooks(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	})
 
+	t.Run("create playbook, unlicensed with zero pre-existing playbooks in the team", func(t *testing.T) {
+		t.Skip()
+		mockCtrl = gomock.NewController(t)
+		configService = mock_config.NewMockService(mockCtrl)
+		handler = NewHandler(configService)
+		playbookService = mock_playbook.NewMockService(mockCtrl)
+		pluginAPI = &plugintest.API{}
+		client = pluginapi.NewClient(pluginAPI)
+		logger = mock_poster.NewMockLogger(mockCtrl)
+		poster = mock_poster.NewMockPoster(mockCtrl)
+		NewPlaybookHandler(handler.APIRouter, playbookService, client, poster, logger, configService)
+
+		configService.EXPECT().
+			IsLicensed().
+			Return(false)
+
+		configService.EXPECT().
+			GetConfiguration().
+			Return(&config.Configuration{
+				EnabledTeams: []string{},
+			})
+
+		playbookService.EXPECT().GetNumPlaybooksForTeam(playbooktest.TeamID).Return(0, nil)
+
+		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
+		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
+
+		playbookService.EXPECT().
+			Create(playbooktest, "testuserid").
+			Return(model.NewId(), nil).
+			Times(1)
+
+		resultPlaybook, err := c.Playbooks.Create(context.TODO(), icClient.PlaybookCreateOptions{
+			Title:          playbooktest.Title,
+			TeamID:         playbooktest.TeamID,
+			Checklists:     toAPIChecklists(playbooktest.Checklists),
+			MemberIDs:      playbooktest.MemberIDs,
+			InvitedUserIDs: playbooktest.InvitedUserIDs,
+		})
+		require.NoError(t, err)
+		assert.NotEmpty(t, resultPlaybook.ID)
+	})
+
 	t.Run("create playbook", func(t *testing.T) {
 		reset(t)
 
@@ -188,6 +237,11 @@ func TestPlaybooks(t *testing.T) {
 			Create(playbooktest, "testuserid").
 			Return(model.NewId(), nil).
 			Times(1)
+
+		poster.EXPECT().
+			PublishWebsocketEventToTeam("playbook_created", map[string]interface{}{
+				"teamID": playbooktest.TeamID,
+			}, playbooktest.TeamID)
 
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
@@ -284,6 +338,11 @@ func TestPlaybooks(t *testing.T) {
 			Return(model.NewId(), nil).
 			Times(1)
 
+		poster.EXPECT().
+			PublishWebsocketEventToTeam("playbook_created", map[string]interface{}{
+				"teamID": playbooktest.TeamID,
+			}, playbooktest.TeamID)
+
 		pluginAPI.On("HasPermissionToTeam", "testInvitedUserID1", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
 		pluginAPI.On("HasPermissionToTeam", "testInvitedUserID2", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
 		pluginAPI.On("GetGroup", "testInvitedGroupID1").Return(&model.Group{
@@ -346,6 +405,11 @@ func TestPlaybooks(t *testing.T) {
 			Create(pbook, "testuserid").
 			Return(model.NewId(), nil).
 			Times(1)
+
+		poster.EXPECT().
+			PublishWebsocketEventToTeam("playbook_created", map[string]interface{}{
+				"teamID": playbooktest.TeamID,
+			}, playbooktest.TeamID)
 
 		pluginAPI.On("HasPermissionToTeam", "testInvitedUserID1", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
 		pluginAPI.On("HasPermissionToTeam", "testInvitedUserID2", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
@@ -843,6 +907,11 @@ func TestPlaybooks(t *testing.T) {
 			Return(nil).
 			Times(1)
 
+		poster.EXPECT().
+			PublishWebsocketEventToTeam("playbook_deleted", map[string]interface{}{
+				"teamID": playbooktest.TeamID,
+			}, playbooktest.TeamID)
+
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PERMISSION_MANAGE_SYSTEM).Return(true)
 
@@ -1012,6 +1081,11 @@ func TestPlaybooks(t *testing.T) {
 			Return(nil).
 			Times(1)
 
+		poster.EXPECT().
+			PublishWebsocketEventToTeam("playbook_deleted", map[string]interface{}{
+				"teamID": playbooktest.TeamID,
+			}, playbooktest.TeamID)
+
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PERMISSION_VIEW_TEAM).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PERMISSION_MANAGE_SYSTEM).Return(false)
 
@@ -1175,6 +1249,7 @@ func TestSortingPlaybooks(t *testing.T) {
 	var mockCtrl *gomock.Controller
 	var handler *Handler
 	var logger *mock_poster.MockLogger
+	var poster *mock_poster.MockPoster
 	var configService *mock_config.MockService
 	var playbookService *mock_playbook.MockService
 	var pluginAPI *plugintest.API
@@ -1204,7 +1279,8 @@ func TestSortingPlaybooks(t *testing.T) {
 		pluginAPI = &plugintest.API{}
 		client = pluginapi.NewClient(pluginAPI)
 		logger = mock_poster.NewMockLogger(mockCtrl)
-		NewPlaybookHandler(handler.APIRouter, playbookService, client, logger, configService)
+		poster = mock_poster.NewMockPoster(mockCtrl)
+		NewPlaybookHandler(handler.APIRouter, playbookService, client, poster, logger, configService)
 
 		configService.EXPECT().
 			IsLicensed().
@@ -1380,6 +1456,7 @@ func TestPagingPlaybooks(t *testing.T) {
 	var handler *Handler
 	var configService *mock_config.MockService
 	var logger *mock_poster.MockLogger
+	var poster *mock_poster.MockPoster
 	var playbookService *mock_playbook.MockService
 	var pluginAPI *plugintest.API
 	var client *pluginapi.Client
@@ -1408,7 +1485,8 @@ func TestPagingPlaybooks(t *testing.T) {
 		pluginAPI = &plugintest.API{}
 		client = pluginapi.NewClient(pluginAPI)
 		logger = mock_poster.NewMockLogger(mockCtrl)
-		NewPlaybookHandler(handler.APIRouter, playbookService, client, logger, configService)
+		poster = mock_poster.NewMockPoster(mockCtrl)
+		NewPlaybookHandler(handler.APIRouter, playbookService, client, poster, logger, configService)
 
 		configService.EXPECT().
 			IsLicensed().
