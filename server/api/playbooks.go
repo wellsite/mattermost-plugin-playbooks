@@ -43,16 +43,18 @@ func NewPlaybookHandler(router *mux.Router, playbookService playbook.Service, ap
 		config:          configService,
 	}
 
-	e20Middleware := E20LicenseRequired{configService}
-
 	playbooksRouter := router.PathPrefix("/playbooks").Subrouter()
+	if !config.PricingPlanDifferentiationEnabled {
+		e20Middleware := E20LicenseRequired{configService}
+		playbooksRouter.Use(e20Middleware.Middleware)
+	}
+
 	playbooksRouter.HandleFunc("", handler.createPlaybook).Methods(http.MethodPost)
 	playbooksRouter.HandleFunc("", handler.getPlaybooks).Methods(http.MethodGet)
 	playbooksRouter.HandleFunc("/autocomplete", handler.getPlaybooksAutoComplete).Methods(http.MethodGet)
 	playbooksRouter.HandleFunc("/count", handler.getPlaybookCount).Methods(http.MethodGet)
 
 	playbookRouter := playbooksRouter.PathPrefix("/{id:[A-Za-z0-9]+}").Subrouter()
-	playbookRouter.Use(e20Middleware.Middleware)
 	playbookRouter.HandleFunc("", handler.getPlaybook).Methods(http.MethodGet)
 	playbookRouter.HandleFunc("", handler.updatePlaybook).Methods(http.MethodPut)
 	playbookRouter.HandleFunc("", handler.deletePlaybook).Methods(http.MethodDelete)
