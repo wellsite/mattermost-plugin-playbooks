@@ -14,6 +14,8 @@ import {Team} from 'mattermost-redux/types/teams';
 import PlaybookList from 'src/components/backstage/playbook_list';
 import PlaybookEdit from 'src/components/backstage/playbook_edit';
 import BackstageIncidentList from 'src/components/backstage/incidents/incident_list/incident_list';
+import BackstageIncidentDetails from 'src/components/backstage/incidents/incident_details/incident_details';
+import {NewPlaybook} from 'src/components/backstage/new_playbook';
 
 import {ErrorPageTypes} from 'src/constants';
 
@@ -169,8 +171,7 @@ const Backstage: FC = () => {
             <BackstageBody>
                 <Switch>
                     <Route path={`${match.url}/playbooks/new`}>
-                        <PlaybookEdit
-                            isNew={true}
+                        <NewPlaybook
                             currentTeam={currentTeam}
                             onClose={goToPlaybooks}
                         />
