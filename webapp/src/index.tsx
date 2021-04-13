@@ -96,9 +96,6 @@ export default class Plugin {
 
             r.registerSlashCommandWillBePostedHook(makeSlashCommandHook(store));
 
-            r.registerNeedsTeamRoute('/error', ErrorPage);
-            r.registerNeedsTeamRoute('/', Backstage);
-
             return r.unregister;
         };
 
@@ -108,6 +105,10 @@ export default class Plugin {
         let unregister: () => void;
         const checkRegistrations = () => {
             updateMainMenuAction();
+
+            const r = new RegistryWrapper(registry, store);
+            r.registerNeedsTeamRoute('/error', ErrorPage);
+            r.registerNeedsTeamRoute('/', Backstage);
 
             if (!registered && isE20LicensedOrDevelopment(store.getState())) {
                 unregister = doRegistrations();
