@@ -13,6 +13,7 @@ import WebsocketEvents from 'mattermost-redux/constants/websocket';
 
 import {makeRHSOpener} from 'src/rhs_opener';
 import {makeSlashCommandHook} from 'src/slash_command';
+import {PRICING_PLAN_DIFFERENTIATION_ENABLED} from 'src/constants';
 
 import {pluginId} from './manifest';
 import ChannelHeaderButton from './components/assets/icons/channel_header_button';
@@ -83,6 +84,9 @@ export default class Plugin {
 
             r.registerSlashCommandWillBePostedHook(makeSlashCommandHook(store));
 
+            r.registerNeedsTeamRoute('/error', ErrorPage);
+            r.registerNeedsTeamRoute('/', Backstage);
+
             return r.unregister;
         };
 
@@ -93,11 +97,10 @@ export default class Plugin {
         const checkRegistrations = () => {
             updateMainMenuAction();
 
-            const r = new RegistryWrapper(registry, store);
-            r.registerNeedsTeamRoute('/error', ErrorPage);
-            r.registerNeedsTeamRoute('/', Backstage);
-
-            if (!registered && isE20LicensedOrDevelopment(store.getState())) {
+            if (PRICING_PLAN_DIFFERENTIATION_ENABLED) {
+                unregister = doRegistrations();
+                registered = true;
+            } else if (!registered && isE20LicensedOrDevelopment(store.getState())) {
                 unregister = doRegistrations();
                 registered = true;
             } else if (unregister && !isE20LicensedOrDevelopment(store.getState())) {

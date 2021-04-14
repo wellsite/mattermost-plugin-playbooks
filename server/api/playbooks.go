@@ -37,6 +37,11 @@ func NewPlaybookHandler(router *mux.Router, playbookService playbook.Service, ap
 	}
 
 	playbooksRouter := router.PathPrefix("/playbooks").Subrouter()
+	if !config.PricingPlanDifferentiationEnabled {
+		e20Middleware := E20LicenseRequired{configService}
+		playbooksRouter.Use(e20Middleware.Middleware)
+	}
+
 	playbooksRouter.HandleFunc("", handler.createPlaybook).Methods(http.MethodPost)
 	playbooksRouter.HandleFunc("", handler.getPlaybooks).Methods(http.MethodGet)
 	playbooksRouter.HandleFunc("/autocomplete", handler.getPlaybooksAutoComplete).Methods(http.MethodGet)
