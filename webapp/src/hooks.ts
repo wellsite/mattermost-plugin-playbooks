@@ -17,6 +17,9 @@ import {getPost as getPostFromState} from 'mattermost-redux/selectors/entities/p
 import {PROFILE_CHUNK_SIZE} from 'src/constants';
 import {getProfileSetForChannel} from 'src/selectors';
 import {Incident, StatusPost} from 'src/types/incident';
+import {clientFetchPlaybooksCount} from 'src/client';
+
+import {isE20LicensedOrDevelopment} from './license';
 
 export function useCurrentTeamPermission(options: PermissionsOptions): boolean {
     const currentTeam = useSelector<GlobalState, Team>(getCurrentTeam);
@@ -188,4 +191,29 @@ export function usePost(postId: string) {
 export function useLatestUpdate(incident: Incident) {
     const postId = useLatestPostId(incident.status_posts);
     return usePost(postId);
+}
+
+// useTeamPlaybooksCount fetches the number of total playbooks per team
+// and returns the count
+export function useTeamPlaybooksCount(teamID: string) {
+    const [playbookCount, setPlaybookCount] = useState(0);
+
+    useEffect(() => {
+        const fetchNumPlaybooks = async () => {
+            const response = await clientFetchPlaybooksCount(teamID);
+            setPlaybookCount(response.count);
+        };
+
+        fetchNumPlaybooks();
+    }, [teamID]);
+
+    return playbookCount;
+}
+
+// useAllowPlaybookCreation returns whether a user can create a playbook
+export function useAllowPlaybookCreation(teamID: string) {
+    const isLicensed = useSelector(isE20LicensedOrDevelopment);
+    const numPlaybooks = useTeamPlaybooksCount(teamID);
+
+    return isLicensed || numPlaybooks === 0;
 }

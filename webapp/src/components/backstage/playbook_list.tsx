@@ -29,11 +29,14 @@ import {SortableColHeader} from 'src/components/sortable_col_header';
 import {PaginationRow} from 'src/components/pagination_row';
 import {TEMPLATE_TITLE_KEY, BACKSTAGE_LIST_PER_PAGE} from 'src/constants';
 import {Banner} from 'src/components/backstage/shared';
+import UpgradeModal from 'src/components/backstage/upgrade_modal';
 
 import RightDots from 'src/components/assets/right_dots';
 import RightFade from 'src/components/assets/right_fade';
 import LeftDots from 'src/components/assets/left_dots';
 import LeftFade from 'src/components/assets/left_fade';
+
+import {useAllowPlaybookCreation} from 'src/hooks';
 
 const DeleteBannerTimeout = 5000;
 
@@ -43,8 +46,11 @@ const PlaybookList: FC = () => {
     const [selectedPlaybook, setSelectedPlaybook] = useState<PlaybookNoChecklist | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showBanner, setShowBanner] = useState(false);
+    const [isUpgradeModalShown, showUpgradeModal, hideUpgradeModal] = useUpgradeModalVisibility(false);
 
     const currentTeam = useSelector<GlobalState, Team>(getCurrentTeam);
+
+    const allowPlaybookCreation = useAllowPlaybookCreation(currentTeam.id);
 
     const [fetchParams, setFetchParams] = useState<{ sort: string, direction: string, page: number, per_page: number }>(
         {
@@ -85,8 +91,12 @@ const PlaybookList: FC = () => {
     };
 
     const newPlaybook = (templateTitle?: string | undefined) => {
-        const queryParams = qs.stringify({[TEMPLATE_TITLE_KEY]: templateTitle}, {addQueryPrefix: true});
-        navigateToTeamPluginUrl(currentTeam.name, `/playbooks/new${queryParams}`);
+        if (allowPlaybookCreation) {
+            const queryParams = qs.stringify({[TEMPLATE_TITLE_KEY]: templateTitle}, {addQueryPrefix: true});
+            navigateToTeamPluginUrl(currentTeam.name, `/playbooks/new${queryParams}`);
+        } else {
+            showUpgradeModal();
+        }
     };
 
     const hideConfirmModal = () => {
@@ -269,10 +279,27 @@ const PlaybookList: FC = () => {
                         onConfirm={onDelete}
                         onCancel={hideConfirmModal}
                     />
+                    <UpgradeModal
+                        show={isUpgradeModalShown}
+                        onHide={hideUpgradeModal}
+                    />
                 </>
             }
         </div>
     );
+};
+
+const useUpgradeModalVisibility = (initialState: boolean): [boolean, () => void, () => void] => {
+    const [isModalShown, setShowModal] = useState(initialState);
+
+    const showUpgradeModal = () => {
+        setShowModal(true);
+    };
+    const hideUpgradeModal = () => {
+        setShowModal(false);
+    };
+
+    return [isModalShown, showUpgradeModal, hideUpgradeModal];
 };
 
 const Container = styled.div`
