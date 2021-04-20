@@ -13,6 +13,7 @@ import {getCurrentTeam} from 'mattermost-redux/selectors/entities/teams';
 import {Incident, Metadata as IncidentMetadata} from 'src/types/incident';
 import {IncidentBackstageTabState} from 'src/types/backstage';
 import {Overview} from 'src/components/backstage/incidents/incident_backstage/overview/overview';
+import {Retrospective} from 'src/components/backstage/incidents/incident_backstage/retrospective/retrospective';
 import {fetchIncident, fetchIncidentMetadata} from 'src/client';
 import {navigateToTeamPluginUrl, navigateToUrl, teamPluginErrorUrl} from 'src/browser_routing';
 import {ErrorPageTypes} from 'src/constants';
@@ -132,7 +133,10 @@ const IncidentBackstage = () => {
         navigateToTeamPluginUrl(currentTeam.name, '/incidents');
     };
 
-    const tabPage = <Overview incident={incident}/>;
+    let tabPage = <Overview incident={incident}/>;
+    if (tabState === IncidentBackstageTabState.ViewingRetrospective) {
+        tabPage = <Retrospective incident={incident}/>;
+    }
 
     return (
         <Container>
@@ -154,6 +158,12 @@ const IncidentBackstage = () => {
                     onClick={() => setTabState(IncidentBackstageTabState.ViewingOverview)}
                 >
                     {'Overview'}
+                </TabItem>
+                <TabItem
+                    active={tabState === IncidentBackstageTabState.ViewingRetrospective}
+                    onClick={() => setTabState(IncidentBackstageTabState.ViewingRetrospective)}
+                >
+                    {'Retrospective'}
                 </TabItem>
             </Row>
             {tabPage}
