@@ -15,6 +15,7 @@ import (
 type Handler struct {
 	APIRouter *mux.Router
 	root      *mux.Router
+	config    config.Service
 }
 
 // NewHandler constructs a new handler.
@@ -30,6 +31,7 @@ func NewHandler(config config.Service) *Handler {
 
 	handler.APIRouter = api
 	handler.root = root
+	handler.config = config
 
 	return handler
 }
