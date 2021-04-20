@@ -18,8 +18,10 @@ import {PROFILE_CHUNK_SIZE} from 'src/constants';
 import {getProfileSetForChannel} from 'src/selectors';
 import {Incident, StatusPost} from 'src/types/incident';
 import {clientFetchPlaybooksCount} from 'src/client';
+import {receivedTeamNumPlaybooks} from 'src/actions';
 
 import {isE20LicensedOrDevelopment} from './license';
+import {currentTeamNumPlaybooks} from './selectors';
 
 import {globalSettings} from './selectors';
 
@@ -205,27 +207,28 @@ export function useLatestUpdate(incident: Incident) {
     return usePost(postId);
 }
 
-// useTeamPlaybooksCount fetches the number of total playbooks per team
-// and returns the count
-export function useTeamPlaybooksCount(teamID: string) {
-    const [playbookCount, setPlaybookCount] = useState(0);
+export function useNumPlaybooksInCurrentTeam() {
+    const dispatch = useDispatch();
+    const team = useSelector(getCurrentTeam);
+    const numPlaybooks = useSelector(currentTeamNumPlaybooks);
 
     useEffect(() => {
-        const fetchNumPlaybooks = async () => {
-            const response = await clientFetchPlaybooksCount(teamID);
-            setPlaybookCount(response.count);
+        const fetch = async () => {
+            const response = await clientFetchPlaybooksCount(team.id);
+            dispatch(receivedTeamNumPlaybooks(team.id, response.count));
         };
 
-        fetchNumPlaybooks();
-    }, [teamID]);
+        fetch();
+    }, [team.id]);
 
-    return playbookCount;
+    return numPlaybooks;
 }
 
-// useAllowPlaybookCreation returns whether a user can create a playbook
-export function useAllowPlaybookCreation(teamID: string) {
+// useAllowPlaybookCreationInCurrentTeam returns whether a user can create
+// a playbook in the current team
+export function useAllowPlaybookCreationInCurrentTeam() {
+    const numPlaybooks = useNumPlaybooksInCurrentTeam();
     const isLicensed = useSelector(isE20LicensedOrDevelopment);
-    const numPlaybooks = useTeamPlaybooksCount(teamID);
 
     return isLicensed || numPlaybooks === 0;
 }

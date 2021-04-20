@@ -36,7 +36,7 @@ import RightFade from 'src/components/assets/right_fade';
 import LeftDots from 'src/components/assets/left_dots';
 import LeftFade from 'src/components/assets/left_fade';
 
-import {useAllowPlaybookCreation, useCanCreatePlaybooks} from 'src/hooks';
+import {useAllowPlaybookCreationInCurrentTeam, useCanCreatePlaybooks} from 'src/hooks';
 
 const DeleteBannerTimeout = 5000;
 
@@ -48,10 +48,9 @@ const PlaybookList: FC = () => {
     const [showBanner, setShowBanner] = useState(false);
     const canCreatePlaybooks = useCanCreatePlaybooks();
     const [isUpgradeModalShown, showUpgradeModal, hideUpgradeModal] = useUpgradeModalVisibility(false);
+    const allowPlaybookCreation = useAllowPlaybookCreationInCurrentTeam();
 
     const currentTeam = useSelector<GlobalState, Team>(getCurrentTeam);
-
-    const allowPlaybookCreation = useAllowPlaybookCreation(currentTeam.id);
 
     const [fetchParams, setFetchParams] = useState<{ sort: string, direction: string, page: number, per_page: number }>(
         {
