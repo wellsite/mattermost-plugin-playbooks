@@ -30,6 +30,8 @@ import {
     handleReconnect,
     handleWebsocketIncidentUpdated,
     handleWebsocketIncidentCreated,
+    handleWebsocketPlaybookCreated,
+    handleWebsocketPlaybookDeleted,
     handleWebsocketUserAdded,
     handleWebsocketUserRemoved,
     handleWebsocketPostEditedOrDeleted,
@@ -38,6 +40,8 @@ import {
 import {
     WEBSOCKET_INCIDENT_UPDATED,
     WEBSOCKET_INCIDENT_CREATED,
+    WEBSOCKET_PLAYBOOK_CREATED,
+    WEBSOCKET_PLAYBOOK_DELETED,
 } from './types/websocket_events';
 import RegistryWrapper from './registry_wrapper';
 import {isE20LicensedOrDevelopment} from './license';
@@ -73,6 +77,8 @@ export default class Plugin {
             r.registerReconnectHandler(handleReconnect(store.getState, store.dispatch));
             r.registerWebSocketEventHandler(WEBSOCKET_INCIDENT_UPDATED, handleWebsocketIncidentUpdated(store.getState, store.dispatch));
             r.registerWebSocketEventHandler(WEBSOCKET_INCIDENT_CREATED, handleWebsocketIncidentCreated(store.getState, store.dispatch));
+            r.registerWebSocketEventHandler(WEBSOCKET_PLAYBOOK_CREATED, handleWebsocketPlaybookCreated(store.getState, store.dispatch));
+            r.registerWebSocketEventHandler(WEBSOCKET_PLAYBOOK_DELETED, handleWebsocketPlaybookDeleted(store.getState, store.dispatch));
             r.registerWebSocketEventHandler(WebsocketEvents.USER_ADDED, handleWebsocketUserAdded(store.getState, store.dispatch));
             r.registerWebSocketEventHandler(WebsocketEvents.USER_REMOVED, handleWebsocketUserRemoved(store.getState, store.dispatch));
             r.registerWebSocketEventHandler(WebsocketEvents.POST_DELETED, handleWebsocketPostEditedOrDeleted(store.getState, store.dispatch));
