@@ -35,6 +35,7 @@ import RightDots from 'src/components/assets/right_dots';
 import RightFade from 'src/components/assets/right_fade';
 import LeftDots from 'src/components/assets/left_dots';
 import LeftFade from 'src/components/assets/left_fade';
+import {UpgradeButton} from 'src/components/assets/buttons';
 
 import {useAllowPlaybookCreationInCurrentTeam, useCanCreatePlaybooks} from 'src/hooks';
 
@@ -231,13 +232,12 @@ const PlaybookList: FC = () => {
                             </div>
                             {canCreatePlaybooks &&
                                 <div className='header-button-div'>
-                                    <button
-                                        className='btn btn-primary'
+                                    <UpgradeButton
                                         onClick={() => newPlaybook()}
                                     >
                                         <i className='icon-plus mr-2'/>
                                         {'Create a Playbook'}
-                                    </button>
+                                    </UpgradeButton>
                                 </div>
                             }
                         </div>
