@@ -3,6 +3,7 @@
 
 import React, {FC, useState, useEffect} from 'react';
 import {useSelector} from 'react-redux';
+import {useLocation} from 'react-router-dom';
 import styled from 'styled-components';
 import qs from 'qs';
 
@@ -42,13 +43,16 @@ import {useAllowPlaybookCreationInCurrentTeam, useCanCreatePlaybooks} from 'src/
 const DeleteBannerTimeout = 5000;
 
 const PlaybookList: FC = () => {
+    const queryString = useLocation().search.substr(1);
+    const params = qs.parse(queryString);
+
     const [playbooks, setPlaybooks] = useState<PlaybookNoChecklist[] | null>(null);
     const [totalCount, setTotalCount] = useState(0);
     const [selectedPlaybook, setSelectedPlaybook] = useState<PlaybookNoChecklist | null>(null);
     const [showConfirmation, setShowConfirmation] = useState(false);
     const [showBanner, setShowBanner] = useState(false);
     const canCreatePlaybooks = useCanCreatePlaybooks();
-    const [isUpgradeModalShown, showUpgradeModal, hideUpgradeModal] = useUpgradeModalVisibility(false);
+    const [isUpgradeModalShown, showUpgradeModal, hideUpgradeModal] = useUpgradeModalVisibility(Boolean(params.modal));
     const allowPlaybookCreation = useAllowPlaybookCreationInCurrentTeam();
 
     const currentTeam = useSelector<GlobalState, Team>(getCurrentTeam);
