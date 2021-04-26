@@ -1,9 +1,17 @@
-import React, {FC} from 'react';
+import React, {FC, useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 
 import styled from 'styled-components';
 
+import {getLicenseConfig} from 'mattermost-redux/actions/general';
+
 import GenericModal from 'src/components/widgets/generic_modal';
 import UpgradeIllustrationSvg from 'src/components/assets/upgrade_illustration_svg';
+import Spinner from 'src/components/assets/icons/spinner';
+import UpgradeSuccessIllustrationSvg from 'src/components/assets/upgrade_success_illustration_svg';
+import {requestTrialLicense} from 'src/client';
+
+import {getAdminAnalytics} from 'src/selectors';
 
 interface Props {
     show: boolean
@@ -11,24 +19,80 @@ interface Props {
 }
 
 const UpgradeModal: FC<Props> = (props: Props) => {
+    const analytics = useSelector(getAdminAnalytics);
+    const serverTotalUsers = analytics?.TOTAL_USERS || 0;
+
+    enum TrialState {
+        Uninitialized,
+        Loading,
+        Error,
+        Success,
+    }
+
+    const [trialState, setTrialState] = useState(TrialState.Uninitialized);
+
+    const requestLicense = async () => {
+        if (trialState === TrialState.Loading) {
+            return;
+        }
+
+        setTrialState(TrialState.Loading);
+
+        const requestedUsers = Math.max(serverTotalUsers, 30);
+        const response = await requestTrialLicense(requestedUsers);
+        if (response.error) {
+            setTrialState(TrialState.Error);
+        } else {
+            setTrialState(TrialState.Success);
+        }
+    };
+
+    type HandlerType = undefined | (() => (Promise<void> | void));
+
+    let illustration = <UpgradeIllustrationSvg/>;
+    let titleText = 'Playbook limit reached';
+    let helpText = 'The free tier is limited to 1 Playbook. Upgrade to create & use more Playbooks.';
+    let confirmButtonText : React.ReactNode = 'Start Trial';
+    let cancelButtonText : React.ReactNode = 'Not Right Now';
+    let handleConfirm : HandlerType = requestLicense;
+    let handleCancel : HandlerType = props.onHide;
+
+    if (trialState === TrialState.Success) {
+        illustration = <UpgradeSuccessIllustrationSvg/>;
+        titleText = 'Thank you';
+        helpText = 'You are now on a free trial of our E20 license.';
+        confirmButtonText = 'Done';
+        handleConfirm = props.onHide;
+        // eslint-disable-next-line no-undefined
+        handleCancel = undefined;
+    }
+
+    if (trialState === TrialState.Loading) {
+        cancelButtonText = <Spinner/>;
+        // eslint-disable-next-line no-undefined
+        handleConfirm = undefined;
+        handleCancel = () => { /*do nothing*/ };
+    }
+
     return (
         <SizedGenericModal
             id={'id'}
             show={props.show}
             modalHeaderText={''}
             onHide={props.onHide}
-            confirmButtonText={'Upgrade Mattermost Cloud'}
-            cancelButtonText={'Not Right Now'}
-            handleCancel={props.onHide}
-            handleConfirm={props.onHide}
+            confirmButtonText={confirmButtonText}
+            cancelButtonText={cancelButtonText}
+            handleCancel={handleCancel}
+            handleConfirm={handleConfirm}
+            autoCloseOnConfirmButton={false}
         >
             <Content>
                 <IllustrationWrapper>
-                    <UpgradeIllustrationSvg/>
+                    {illustration}
                 </IllustrationWrapper>
                 <Header>
-                    <Title>{'Playbook limit reached'}</Title>
-                    <HelpText>{'The free tier is limited to 1 Playbook. Upgrade to create & use more Playbooks.'}</HelpText>
+                    <Title>{titleText}</Title>
+                    <HelpText>{helpText}</HelpText>
                 </Header>
             </Content>
         </SizedGenericModal>

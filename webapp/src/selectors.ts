@@ -11,7 +11,8 @@ import {getCurrentChannelId} from 'mattermost-redux/selectors/entities/channels'
 import {getUsers} from 'mattermost-redux/selectors/entities/common';
 import {UserProfile} from 'mattermost-redux/types/users';
 import {sortByUsername} from 'mattermost-redux/utils/user_utils';
-import {$ID, IDMappedObjects} from 'mattermost-redux/types/utilities';
+import {$ID, IDMappedObjects, Dictionary} from 'mattermost-redux/types/utilities';
+import {AnalyticsRow} from 'mattermost-redux/types/admin';
 
 import {pluginId} from 'src/manifest';
 import {
@@ -32,6 +33,8 @@ export const selectToggleRHS = (state: GlobalState): () => void => pluginState(s
 export const isIncidentRHSOpen = (state: GlobalState): boolean => pluginState(state).rhsOpen;
 
 export const getIsRhsExpanded = (state: WebGlobalState): boolean => state.views.rhs.isSidebarExpanded;
+
+export const getAdminAnalytics = (state: GlobalState): Dictionary<number> => state.entities.admin.analytics as Dictionary<number>;
 
 export const clientId = (state: GlobalState): string => pluginState(state).clientId;
 
