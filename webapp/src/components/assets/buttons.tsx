@@ -119,6 +119,6 @@ export const UpgradeButton: FC<UpgradeButtonProps> = (props: UpgradeButtonProps)
 
 const PositionedUpgradeBadge = styled(UpgradeBadge)`
     position: absolute;
-    top: 0;
-    right: 0;
+    top: -4px;
+    right: -6px;
 `;
