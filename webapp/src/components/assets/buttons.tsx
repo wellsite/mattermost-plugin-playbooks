@@ -105,7 +105,7 @@ export const GrayTertiaryButton = styled.button`
     }
 `;
 
-type UpgradeButtonProps = React.ComponentProps<typeof PrimaryButton>;
+export type UpgradeButtonProps = React.ComponentProps<typeof PrimaryButton>;
 
 export const UpgradeButton: FC<UpgradeButtonProps> = (props: UpgradeButtonProps) => {
     const {children, ...rest} = props;

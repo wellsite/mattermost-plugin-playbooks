@@ -36,7 +36,7 @@ import RightDots from 'src/components/assets/right_dots';
 import RightFade from 'src/components/assets/right_fade';
 import LeftDots from 'src/components/assets/left_dots';
 import LeftFade from 'src/components/assets/left_fade';
-import {UpgradeButton} from 'src/components/assets/buttons';
+import {PrimaryButton, UpgradeButton, UpgradeButtonProps} from 'src/components/assets/buttons';
 
 import {useAllowPlaybookCreationInCurrentTeam, useCanCreatePlaybooks} from 'src/hooks';
 
@@ -236,12 +236,13 @@ const PlaybookList: FC = () => {
                             </div>
                             {canCreatePlaybooks &&
                                 <div className='header-button-div'>
-                                    <UpgradeButton
+                                    <CreatePlaybookButton
                                         onClick={() => newPlaybook()}
+                                        allowPlaybookCreation={allowPlaybookCreation}
                                     >
                                         <i className='icon-plus mr-2'/>
                                         {'Create a Playbook'}
-                                    </UpgradeButton>
+                                    </CreatePlaybookButton>
                                 </div>
                             }
                         </div>
@@ -298,6 +299,18 @@ const PlaybookList: FC = () => {
             }
         </div>
     );
+};
+
+type CreatePlaybookButtonProps = UpgradeButtonProps & {allowPlaybookCreation: boolean};
+
+const CreatePlaybookButton : FC<CreatePlaybookButtonProps> = (props: CreatePlaybookButtonProps) => {
+    const {children, allowPlaybookCreation, ...rest} = props;
+
+    if (allowPlaybookCreation) {
+        return <PrimaryButton {...rest}>{children}</PrimaryButton>;
+    }
+
+    return <UpgradeButton {...rest}>{children}</UpgradeButton>;
 };
 
 const useUpgradeModalVisibility = (initialState: boolean): [boolean, () => void, () => void] => {
