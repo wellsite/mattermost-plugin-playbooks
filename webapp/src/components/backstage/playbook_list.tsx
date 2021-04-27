@@ -198,6 +198,10 @@ const PlaybookList: FC = () => {
 
     return (
         <div className='Playbook'>
+            <UpgradeModal
+                show={isUpgradeModalShown}
+                onHide={hideUpgradeModal}
+            />
             {deleteSuccessfulBanner}
             {canCreatePlaybooks &&
                 <TemplateSelector
@@ -290,10 +294,6 @@ const PlaybookList: FC = () => {
                         confirmButtonText={'Delete Playbook'}
                         onConfirm={onDelete}
                         onCancel={hideConfirmModal}
-                    />
-                    <UpgradeModal
-                        show={isUpgradeModalShown}
-                        onHide={hideUpgradeModal}
                     />
                 </>
             }
