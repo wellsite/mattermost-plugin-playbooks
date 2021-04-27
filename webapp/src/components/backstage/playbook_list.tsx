@@ -216,6 +216,7 @@ const PlaybookList: FC = () => {
                     <NoContentPage
                         onNewPlaybook={newPlaybook}
                         canCreatePlaybooks={canCreatePlaybooks}
+                        allowPlaybookCreation={allowPlaybookCreation}
                     />
                     <NoContentPlaybookSvg/>
                 </>
@@ -240,13 +241,13 @@ const PlaybookList: FC = () => {
                             </div>
                             {canCreatePlaybooks &&
                                 <div className='header-button-div'>
-                                    <CreatePlaybookButton
+                                    <UpgradeOrPrimaryButton
                                         onClick={() => newPlaybook()}
                                         allowPlaybookCreation={allowPlaybookCreation}
                                     >
                                         <i className='icon-plus mr-2'/>
                                         {'Create a Playbook'}
-                                    </CreatePlaybookButton>
+                                    </UpgradeOrPrimaryButton>
                                 </div>
                             }
                         </div>
@@ -303,7 +304,7 @@ const PlaybookList: FC = () => {
 
 type CreatePlaybookButtonProps = UpgradeButtonProps & {allowPlaybookCreation: boolean};
 
-const CreatePlaybookButton : FC<CreatePlaybookButtonProps> = (props: CreatePlaybookButtonProps) => {
+const UpgradeOrPrimaryButton : FC<CreatePlaybookButtonProps> = (props: CreatePlaybookButtonProps) => {
     const {children, allowPlaybookCreation, ...rest} = props;
 
     if (allowPlaybookCreation) {
@@ -386,19 +387,20 @@ const Button = styled.button`
     }
 `;
 
-const NoContentPage = (props: { onNewPlaybook: () => void, canCreatePlaybooks: boolean }) => {
+const NoContentPage = (props: { onNewPlaybook: () => void, canCreatePlaybooks: boolean, allowPlaybookCreation: boolean }) => {
     return (
         <Container>
             <Title>{'What is a Playbook?'}</Title>
             <Description>{'A playbook is a workflow template which must be created before an incident occurs. It defines the checklists and tasks associated with an incident, as well as who can use playbook to start an incident.'}</Description>
             { props.canCreatePlaybooks &&
-                <Button
+                <UpgradeOrPrimaryButton
                     className='mt-6'
                     onClick={() => props.onNewPlaybook()}
+                    allowPlaybookCreation={props.allowPlaybookCreation}
                 >
                     <i className='icon-plus mr-2'/>
                     {'New Playbook'}
-                </Button>
+                </UpgradeOrPrimaryButton>
             }
             { !props.canCreatePlaybooks &&
             <DescriptionWarn>{"There are no playbooks to view. You don't have permission to create playbooks on this server."}</DescriptionWarn>
