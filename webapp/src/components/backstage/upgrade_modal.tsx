@@ -1,9 +1,10 @@
 import React, {FC, useState} from 'react';
-import {useDispatch, useSelector} from 'react-redux';
+import {useSelector} from 'react-redux';
 
 import styled from 'styled-components';
 
-import {getLicenseConfig} from 'mattermost-redux/actions/general';
+import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
+import General from 'mattermost-redux/constants/general';
 
 import GenericModal from 'src/components/widgets/generic_modal';
 import UpgradeIllustrationSvg from 'src/components/assets/upgrade_illustration_svg';
@@ -18,7 +19,15 @@ interface Props {
     onHide: () => void;
 }
 
+const isSystemAdmin = (roles: string): boolean => {
+    const rolesArray = roles.split(' ');
+    return rolesArray.includes(General.SYSTEM_ADMIN_ROLE);
+};
+
 const UpgradeModal: FC<Props> = (props: Props) => {
+    const currentUser = useSelector(getCurrentUser);
+    const isCurrentUserAdmin = isSystemAdmin(currentUser.roles);
+
     const analytics = useSelector(getAdminAnalytics);
     const serverTotalUsers = analytics?.TOTAL_USERS || 0;
 
@@ -59,7 +68,7 @@ const UpgradeModal: FC<Props> = (props: Props) => {
 
     if (trialState === TrialState.Success) {
         illustration = <UpgradeSuccessIllustrationSvg/>;
-        titleText = 'Thank you';
+        titleText = 'Thank you!';
         helpText = 'You are now on a free trial of our E20 license.';
         confirmButtonText = 'Done';
         handleConfirm = props.onHide;
@@ -72,6 +81,20 @@ const UpgradeModal: FC<Props> = (props: Props) => {
         // eslint-disable-next-line no-undefined
         handleConfirm = undefined;
         handleCancel = () => { /*do nothing*/ };
+    }
+
+    if (!isCurrentUserAdmin) {
+        helpText = 'The free tier is limited to 1 Playbook. Notify your administrator to upgrade.';
+        confirmButtonText = 'Notify Administrator';
+        handleConfirm = () => {
+            setTrialState(TrialState.Success);
+        };
+
+        if (trialState === TrialState.Success) {
+            helpText = 'A notification has been sent to your administrator.';
+            confirmButtonText = 'Done';
+            handleConfirm = props.onHide;
+        }
     }
 
     return (
