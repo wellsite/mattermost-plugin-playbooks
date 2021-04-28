@@ -328,6 +328,16 @@ export const requestTrialLicense = async (users: number) => {
     }
 };
 
+export const notifyAdmins = async (message: string) => {
+    const body = `{"message": "${message}"}`;
+    try {
+        const data = await doPost(`${apiUrl}/bot/notify-admins`, body);
+        return data;
+    } catch (error) {
+        return {error};
+    }
+};
+
 export const doGet = async (url: string) => {
     const {data} = await doFetchWithResponse(url, {method: 'get'});
 

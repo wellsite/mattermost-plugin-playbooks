@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/pkg/errors"
 )
 
 // PostMessage posts a message to a specified channel.
@@ -80,6 +81,31 @@ func (b *Bot) PublishWebsocketEventToUser(event string, payload interface{}, use
 	b.pluginAPI.Frontend.PublishWebSocketEvent(event, payloadMap, &model.WebsocketBroadcast{
 		UserId: userID,
 	})
+}
+
+func (b *Bot) NotifyAdmins(message string) error {
+	admins, err := b.pluginAPI.User.Search(&model.UserSearch{
+		Role:  string(model.SYSTEM_ADMIN_ROLE_ID),
+		Limit: 100,
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "unable to find all admin users")
+	}
+
+	if len(admins) == 0 {
+		return fmt.Errorf("no admins found")
+	}
+
+	for _, admin := range admins {
+		go func(adminID string) {
+			if err := b.DM(adminID, message); err != nil {
+				b.pluginAPI.Log.Warn("failed to send a DM to user", "user ID", adminID, "error", err)
+			}
+		}(admin.Id)
+	}
+
+	return nil
 }
 
 func (b *Bot) makePayloadMap(payload interface{}) map[string]interface{} {
