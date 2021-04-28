@@ -21,9 +21,7 @@ import {clientFetchPlaybooksCount} from 'src/client';
 import {receivedTeamNumPlaybooks} from 'src/actions';
 
 import {isE20LicensedOrDevelopment} from './license';
-import {currentTeamNumPlaybooks} from './selectors';
-
-import {globalSettings} from './selectors';
+import {currentTeamNumPlaybooks, globalSettings} from './selectors';
 
 export function useCurrentTeamPermission(options: PermissionsOptions): boolean {
     const currentTeam = useSelector<GlobalState, Team>(getCurrentTeam);
