@@ -16,7 +16,7 @@ export const NewPlaybook: FC<Props> = (props: Props) => {
     const allowPlaybookCreation = useAllowPlaybookCreationInCurrentTeam();
 
     if (!allowPlaybookCreation) {
-        return <Redirect to={teamPluginUrl(props.currentTeam.name, '/playbooks?modal=true')}/>;
+        return <Redirect to={teamPluginUrl(props.currentTeam.name, '/playbooks')}/>;
     }
 
     return (
