@@ -98,8 +98,36 @@ func (b *Bot) NotifyAdmins(message string) error {
 	}
 
 	for _, admin := range admins {
+		post := &model.Post{Message: message}
+		attachments := []*model.SlackAttachment{
+			{
+				Title:  "Create multiple Playbooks in Incident Collaboration with Mattermost Enterprise E10",
+				Text:   "Playbooks are workflows that provide guidance through an incident. Each playbook can be customized and refined over time, to improve time to resolution. In E10 you can create an unlimited number of playbooks for your team. [Learn more](example.com).",
+				Footer: "When you select \"Start 30-day trial\", you agree to the Mattermost Software Evaluation Agreement, Privacy Policy, and receiving product emails.",
+				Actions: []*model.PostAction{
+					{
+
+						Id:    "message",
+						Name:  "Start 30-day trial",
+						Style: "primary",
+						Type:  "button",
+						Integration: &model.PostActionIntegration{
+							URL: fmt.Sprintf("/plugins/%s/api/v0/bot/notify-admins/button-start-trial",
+								b.configService.GetManifest().Id),
+							Context: map[string]interface{}{
+								"users":                 100,
+								"termsAccepted":         true,
+								"receiveEmailsAccepted": true,
+							},
+						},
+					},
+				},
+			},
+		}
+		model.ParseSlackAttachment(post, attachments)
+
 		go func(adminID string) {
-			if err := b.DM(adminID, message); err != nil {
+			if err := b.dm(adminID, post); err != nil {
 				b.pluginAPI.Log.Warn("failed to send a DM to user", "user ID", adminID, "error", err)
 			}
 		}(admin.Id)

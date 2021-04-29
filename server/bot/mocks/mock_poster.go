@@ -83,18 +83,18 @@ func (mr *MockPosterMockRecorder) EphemeralPost(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EphemeralPost", reflect.TypeOf((*MockPoster)(nil).EphemeralPost), arg0, arg1, arg2)
 }
 
-// NotifyAllAdmins mocks base method
-func (m *MockPoster) NotifyAllAdmins(arg0 string) error {
+// NotifyAdmins mocks base method
+func (m *MockPoster) NotifyAdmins(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NotifyAllAdmins", arg0)
+	ret := m.ctrl.Call(m, "NotifyAdmins", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// NotifyAllAdmins indicates an expected call of NotifyAllAdmins
-func (mr *MockPosterMockRecorder) NotifyAllAdmins(arg0 interface{}) *gomock.Call {
+// NotifyAdmins indicates an expected call of NotifyAdmins
+func (mr *MockPosterMockRecorder) NotifyAdmins(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyAllAdmins", reflect.TypeOf((*MockPoster)(nil).NotifyAllAdmins), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NotifyAdmins", reflect.TypeOf((*MockPoster)(nil).NotifyAdmins), arg0)
 }
 
 // PostMessage mocks base method
