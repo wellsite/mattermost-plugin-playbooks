@@ -328,7 +328,7 @@ export const requestTrialLicense = async (users: number) => {
     }
 };
 
-export const notifyAdmins = async (message: string) => {
+export const postMessageToAdmins = async (message: string) => {
     const body = `{"message": "${message}"}`;
     try {
         const data = await doPost(`${apiUrl}/bot/notify-admins`, body);

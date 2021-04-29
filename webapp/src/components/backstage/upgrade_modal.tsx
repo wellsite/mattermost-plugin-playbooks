@@ -10,7 +10,7 @@ import GenericModal from 'src/components/widgets/generic_modal';
 import UpgradeIllustrationSvg from 'src/components/assets/upgrade_illustration_svg';
 import Spinner from 'src/components/assets/icons/spinner';
 import UpgradeSuccessIllustrationSvg from 'src/components/assets/upgrade_success_illustration_svg';
-import {requestTrialLicense} from 'src/client';
+import {requestTrialLicense, postMessageToAdmins} from 'src/client';
 
 import {getAdminAnalytics} from 'src/selectors';
 
@@ -24,6 +24,109 @@ const isSystemAdmin = (roles: string): boolean => {
     return rolesArray.includes(General.SYSTEM_ADMIN_ROLE);
 };
 
+type HandlerType = undefined | (() => (Promise<void> | void));
+
+interface ModalContents {
+    illustration: React.ReactNode;
+    titleText: string;
+    helpText: string;
+    confirmButtonText : React.ReactNode;
+    cancelButtonText : React.ReactNode;
+    handleConfirm : HandlerType;
+    handleCancel : HandlerType;
+}
+
+enum ModalActionState {
+    Uninitialized,
+    Loading,
+    Error,
+    Success,
+}
+
+const getModalData = (onHide: () => void, requestLicense: HandlerType, notifyAdmins: HandlerType, isAdmin: boolean, state: ModalActionState) : ModalContents => {
+    const CommonModal = {
+        illustration: <UpgradeIllustrationSvg/>,
+        titleText: 'Playbook limit reached',
+        helpText: 'The free tier is limited to 1 Playbook. Create more Playbooks with Mattermost Enterprise E10.',
+        confirmButtonText: 'Start Trial',
+        cancelButtonText: 'Not Right Now',
+        handleConfirm: requestLicense,
+        handleCancel: onHide,
+    };
+
+    const AdminStartModal = {...CommonModal};
+
+    const AdminLoadingModal = Object.assign({...AdminStartModal}, {
+        cancelButtonText: <Spinner/>,
+        // eslint-disable-next-line no-undefined
+        handleConfirm: undefined,
+        handleCancel: () => { /*do nothing*/ },
+    });
+
+    const AdminErrorModal = Object.assign({...AdminStartModal}, {
+
+    });
+
+    const AdminSuccessModal = Object.assign({...AdminStartModal}, {
+        illustration: <UpgradeSuccessIllustrationSvg/>,
+        titleText: 'Your 30-day trial has started',
+        helpText: 'Your Enterprise E10 license expires on May 28, 2021.',
+        confirmButtonText: 'Done',
+        handleConfirm: onHide,
+        // eslint-disable-next-line no-undefined
+        handleCancel: undefined,
+    });
+
+    const UserStartModal = Object.assign({...CommonModal}, {
+        helpText: 'The free tier is limited to 1 Playbook. Notify your administrator to upgrade.',
+        confirmButtonText: 'Notify Administrator',
+        handleConfirm: notifyAdmins,
+    });
+
+    const UserLoadingModal = Object.assign({...UserStartModal}, {
+        cancelButtonText: <Spinner/>,
+        // eslint-disable-next-line no-undefined
+        handleConfirm: undefined,
+        handleCancel: () => { /*do nothing*/ },
+    });
+
+    const UserSuccessModal = Object.assign({...UserStartModal}, {
+        helpText: 'A notification has been sent to your administrator.',
+        confirmButtonText: 'Done',
+        handleConfirm: onHide,
+        // eslint-disable-next-line no-undefined
+        handleCancel: undefined,
+    });
+
+    if (isAdmin) {
+        switch (state) {
+        case ModalActionState.Uninitialized:
+            return AdminStartModal;
+        case ModalActionState.Loading:
+            return AdminLoadingModal;
+        case ModalActionState.Error:
+            return AdminErrorModal;
+        case ModalActionState.Success:
+            return AdminSuccessModal;
+        default:
+            return AdminStartModal;
+        }
+    } else {
+        switch (state) {
+        case ModalActionState.Uninitialized:
+            return UserStartModal;
+        case ModalActionState.Loading:
+            return UserLoadingModal;
+        case ModalActionState.Error:
+            return UserStartModal;
+        case ModalActionState.Success:
+            return UserSuccessModal;
+        default:
+            return UserStartModal;
+        }
+    }
+};
+
 const UpgradeModal: FC<Props> = (props: Props) => {
     const currentUser = useSelector(getCurrentUser);
     const isCurrentUserAdmin = isSystemAdmin(currentUser.roles);
@@ -31,71 +134,37 @@ const UpgradeModal: FC<Props> = (props: Props) => {
     const analytics = useSelector(getAdminAnalytics);
     const serverTotalUsers = analytics?.TOTAL_USERS || 0;
 
-    enum TrialState {
-        Uninitialized,
-        Loading,
-        Error,
-        Success,
-    }
-
-    const [trialState, setTrialState] = useState(TrialState.Uninitialized);
+    const [actionState, setActionState] = useState(ModalActionState.Uninitialized);
 
     const requestLicense = async () => {
-        if (trialState === TrialState.Loading) {
+        if (actionState === ModalActionState.Loading) {
             return;
         }
 
-        setTrialState(TrialState.Loading);
+        setActionState(ModalActionState.Loading);
 
         const requestedUsers = Math.max(serverTotalUsers, 30);
         const response = await requestTrialLicense(requestedUsers);
         if (response.error) {
-            setTrialState(TrialState.Error);
+            setActionState(ModalActionState.Error);
         } else {
-            setTrialState(TrialState.Success);
+            setActionState(ModalActionState.Success);
         }
     };
 
-    type HandlerType = undefined | (() => (Promise<void> | void));
-
-    let illustration = <UpgradeIllustrationSvg/>;
-    let titleText = 'Playbook limit reached';
-    let helpText = 'The free tier is limited to 1 Playbook. Upgrade to create & use more Playbooks.';
-    let confirmButtonText : React.ReactNode = 'Start Trial';
-    let cancelButtonText : React.ReactNode = 'Not Right Now';
-    let handleConfirm : HandlerType = requestLicense;
-    let handleCancel : HandlerType = props.onHide;
-
-    if (trialState === TrialState.Success) {
-        illustration = <UpgradeSuccessIllustrationSvg/>;
-        titleText = 'Thank you!';
-        helpText = 'You are now on a free trial of our E20 license.';
-        confirmButtonText = 'Done';
-        handleConfirm = props.onHide;
-        // eslint-disable-next-line no-undefined
-        handleCancel = undefined;
-    }
-
-    if (trialState === TrialState.Loading) {
-        cancelButtonText = <Spinner/>;
-        // eslint-disable-next-line no-undefined
-        handleConfirm = undefined;
-        handleCancel = () => { /*do nothing*/ };
-    }
-
-    if (!isCurrentUserAdmin) {
-        helpText = 'The free tier is limited to 1 Playbook. Notify your administrator to upgrade.';
-        confirmButtonText = 'Notify Administrator';
-        handleConfirm = () => {
-            setTrialState(TrialState.Success);
-        };
-
-        if (trialState === TrialState.Success) {
-            helpText = 'A notification has been sent to your administrator.';
-            confirmButtonText = 'Done';
-            handleConfirm = props.onHide;
+    const notifyAdmins = async () => {
+        if (actionState === ModalActionState.Loading) {
+            return;
         }
-    }
+
+        setActionState(ModalActionState.Loading);
+
+        const message = `@${currentUser.username} requested the ability to create more Playbooks in Incident Collaboration`;
+        await postMessageToAdmins(message);
+        setActionState(ModalActionState.Success);
+    };
+
+    const modalData = getModalData(props.onHide, requestLicense, notifyAdmins, isCurrentUserAdmin, actionState);
 
     return (
         <SizedGenericModal
@@ -103,19 +172,19 @@ const UpgradeModal: FC<Props> = (props: Props) => {
             show={props.show}
             modalHeaderText={''}
             onHide={props.onHide}
-            confirmButtonText={confirmButtonText}
-            cancelButtonText={cancelButtonText}
-            handleCancel={handleCancel}
-            handleConfirm={handleConfirm}
+            confirmButtonText={modalData.confirmButtonText}
+            cancelButtonText={modalData.cancelButtonText}
+            handleCancel={modalData.handleCancel}
+            handleConfirm={modalData.handleConfirm}
             autoCloseOnConfirmButton={false}
         >
             <Content>
                 <IllustrationWrapper>
-                    {illustration}
+                    {modalData.illustration}
                 </IllustrationWrapper>
                 <Header>
-                    <Title>{titleText}</Title>
-                    <HelpText>{helpText}</HelpText>
+                    <Title>{modalData.titleText}</Title>
+                    <HelpText>{modalData.helpText}</HelpText>
                 </Header>
             </Content>
         </SizedGenericModal>
@@ -158,7 +227,10 @@ const Title = styled(CenteredRow)`
 const HelpText = styled(CenteredRow)`
     display: grid;
     align-content: center;
+    text-align: center;
     height: 24px;
+    width: 448px;
+    padding: 0 55px;
 
     font-weight: 400;
     font-size: 12px;
