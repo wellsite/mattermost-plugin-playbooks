@@ -47,7 +47,7 @@ const getModalData = (onHide: () => void, requestLicense: HandlerType, notifyAdm
     const CommonModal = {
         illustration: <UpgradeIllustrationSvg/>,
         titleText: 'Playbook limit reached',
-        helpText: 'The free tier is limited to 1 Playbook. Create more Playbooks with Mattermost Enterprise E10.',
+        helpText: 'Every incident is different. With multiple playbooks each incident\'s workflow can be refined over time to improve time to resolution.',
         confirmButtonText: 'Start Trial',
         cancelButtonText: 'Not Right Now',
         handleConfirm: requestLicense,
@@ -159,7 +159,7 @@ const UpgradeModal: FC<Props> = (props: Props) => {
 
         setActionState(ModalActionState.Loading);
 
-        const message = `@${currentUser.username} requested the ability to create more Playbooks in Incident Collaboration`;
+        const message = `@${currentUser.username} requested access to create more playbooks in Incident Collaboration.`;
         await postMessageToAdmins(message);
         setActionState(ModalActionState.Success);
     };
@@ -230,7 +230,6 @@ const HelpText = styled(CenteredRow)`
     text-align: center;
     height: 24px;
     width: 448px;
-    padding: 0 55px;
 
     font-weight: 400;
     font-size: 12px;
