@@ -222,11 +222,21 @@ export function useNumPlaybooksInCurrentTeam() {
     return numPlaybooks;
 }
 
-// useAllowPlaybookCreationInCurrentTeam returns whether a user can create
-// a playbook in the current team
-export function useAllowPlaybookCreationInCurrentTeam() {
+function useIsAllowedInE0() {
     const numPlaybooks = useNumPlaybooksInCurrentTeam();
     const isLicensed = useSelector(isE20LicensedOrDevelopment);
 
     return isLicensed || numPlaybooks === 0;
+}
+
+// useAllowPlaybookCreationInCurrentTeam returns whether a user can create
+// a playbook in the current team
+export function useAllowPlaybookCreationInCurrentTeam() {
+    return useIsAllowedInE0();
+}
+
+// useAllowTimelineViewInCurrentTeam returns whether a user can view the RHS
+// timeline in the current team
+export function useAllowTimelineViewInCurrentTeam() {
+    return useIsAllowedInE0();
 }
