@@ -19,3 +19,7 @@ require (
 )
 
 replace github.com/mattermost/mattermost-plugin-incident-collaboration/client => ./client
+
+replace github.com/mattermost/mattermost-plugin-api => /home/alejandro/projects/mattermost/mattermost-plugin-api
+
+replace github.com/mattermost/mattermost-server/v5 => /home/alejandro/projects/mattermost/mattermost-server

@@ -193,13 +193,13 @@ func TestPlaybooks(t *testing.T) {
 		t.Skip()
 		mockCtrl = gomock.NewController(t)
 		configService = mock_config.NewMockService(mockCtrl)
-		handler = NewHandler(configService)
 		playbookService = mock_playbook.NewMockService(mockCtrl)
 		pluginAPI = &plugintest.API{}
 		client = pluginapi.NewClient(pluginAPI)
+		handler = NewHandler(client, configService)
 		logger = mock_poster.NewMockLogger(mockCtrl)
 		poster = mock_poster.NewMockPoster(mockCtrl)
-		NewPlaybookHandler(handler.APIRouter, playbookService, client, poster, logger, configService)
+		NewPlaybookHandler(handler.APIRouter, playbookService, client, logger, configService)
 
 		configService.EXPECT().
 			IsLicensed().

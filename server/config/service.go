@@ -11,7 +11,7 @@ import (
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
 )
 
-const PricingPlanDifferentiationEnabled = false
+const PricingPlanDifferentiationEnabled = true
 
 // ServiceImpl holds access to the plugin's Configuration.
 type ServiceImpl struct {
