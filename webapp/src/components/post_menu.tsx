@@ -11,7 +11,9 @@ import {getPost} from 'mattermost-redux/selectors/entities/posts';
 
 import IncidentPostMenuIcon from 'src/components/assets/icons/post_menu_icon';
 
-import {addToTimeline, startIncident} from 'src/actions';
+import {addToTimeline, startIncident, showPostMenuModal} from 'src/actions';
+
+import {useAllowAddMessageToTimelineInCurrentTeam} from 'src/hooks';
 
 interface Props {
     postId: string;
@@ -50,13 +52,19 @@ export const StartIncidentPostMenu: FC<Props> = (props: Props) => {
 
 export const AttachToIncidentPostMenu: FC<Props> = (props: Props) => {
     const dispatch = useDispatch();
+    const allowMessage = useAllowAddMessageToTimelineInCurrentTeam();
+
     const post = useSelector<GlobalState, Post>((state) => getPost(state, props.postId));
     if (!post || isSystemMessage(post)) {
         return null;
     }
 
     const handleClick = () => {
-        dispatch(addToTimeline(props.postId));
+        if (allowMessage) {
+            dispatch(addToTimeline(props.postId));
+        } else {
+            dispatch(showPostMenuModal());
+        }
     };
 
     return (

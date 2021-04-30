@@ -240,3 +240,9 @@ export function useAllowPlaybookCreationInCurrentTeam() {
 export function useAllowTimelineViewInCurrentTeam() {
     return useIsAllowedInE0();
 }
+
+// useAllowAddMessageToTimelineInCurrentTeam returns whether a user can add a
+// post to the timeline in the current team
+export function useAllowAddMessageToTimelineInCurrentTeam() {
+    return useIsAllowedInE0();
+}
