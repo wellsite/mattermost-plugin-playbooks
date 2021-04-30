@@ -112,7 +112,7 @@ export default class Plugin {
         const checkRegistrations = () => {
             updateMainMenuAction();
 
-            if (PRICING_PLAN_DIFFERENTIATION_ENABLED) {
+            if (!registered && PRICING_PLAN_DIFFERENTIATION_ENABLED) {
                 unregister = doRegistrations();
                 registered = true;
             } else if (!registered && isE20LicensedOrDevelopment(store.getState())) {
