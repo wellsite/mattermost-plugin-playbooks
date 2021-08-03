@@ -50,36 +50,39 @@ const Title = styled.h5`
     line-height: 20px;
     margin-top: 0;
     margin-bottom: 0.25rem;
+`;
 
-    a {
-        display: flex;
-        max-width: 100%;
-        overflow: hidden;
-        padding-right: 1rem;
-        span {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: inline-block;
-        }
-        svg {
-            opacity: 0;
-            flex-shrink: 0;
-            color: rgba(var(--center-channel-color-rgb), 0.72);
-            margin: 3px 0 0 3px;
-            transition: opacity 0.15s ease-out;
-        }
+const TitleLink = styled(Link)`
+    display: flex;
+    max-width: 100%;
+    overflow: hidden;
+    padding-right: 1rem;
+
+    &&,
+    &&:hover,
+    &&:focus {
+        color: var(--center-channel-color);
     }
-    .app__body & a:hover,
-    .app__body & a:focus {
+
+    span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+    }
+    svg {
+        opacity: 0;
+        flex-shrink: 0;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+        margin: 3px 0 0 3px;
+        transition: opacity 0.15s ease-out;
+    }
+
+    &:hover,
+    &:focus {
         svg {
             opacity: 1;
         }
-    }
-    .app__body & a,
-    .app__body & a:hover,
-    .app__body & a:focus {
-        color: var(--center-channel-color);
     }
 `;
 
@@ -177,7 +180,7 @@ export const RHSHomePlaybook = ({
         <Item>
             <div>
                 <Title>
-                    <Link
+                    <TitleLink
                         to={view(id)}
                         ref={linkRef}
                     >
@@ -191,7 +194,7 @@ export const RHSHomePlaybook = ({
                             path={mdiOpenInNew}
                             size={0.85}
                         />
-                    </Link>
+                    </TitleLink>
                 </Title>
                 <Sub>
                     {num_runs > 0 ? (
@@ -267,7 +270,7 @@ export const RHSHomeTemplate = ({
         <Item>
             <div>
                 <Title ref={linkRef}>
-                    <Link
+                    <TitleLink
                         to={allowPlaybookCreation ? create(template.title) : ''}
                         onClick={(e) => {
                             e.preventDefault();
@@ -285,7 +288,7 @@ export const RHSHomeTemplate = ({
                             path={mdiOpenInNew}
                             size={0.85}
                         />
-                    </Link>
+                    </TitleLink>
                 </Title>
                 <Sub/>
                 <Meta>
