@@ -4,6 +4,8 @@ const path = require('path');
 
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
+const babelLoaderExcludeNodeModulesExcept = require('babel-loader-exclude-node-modules-except');
+
 const PLUGIN_ID = require('../plugin.json').id;
 
 const NPM_TARGET = process.env.npm_lifecycle_event; //eslint-disable-line no-process-env
@@ -48,10 +50,13 @@ let config = {
     resolve: {
         alias: {
             src: path.resolve(__dirname, './src/'),
+            'mattermost-redux': path.resolve(__dirname, './node_modules/mattermost-webapp/packages/mattermost-redux/src/'),
+            reselect: path.resolve(__dirname, './node_modules/mattermost-webapp/packages/reselect/src/'),
         },
         modules: [
             'src',
             'node_modules',
+            'node_modules/mattermost-webapp',
         ],
         extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
     },
@@ -59,7 +64,9 @@ let config = {
         rules: [
             {
                 test: /\.(js|jsx|ts|tsx)$/,
-                exclude: /node_modules/,
+                exclude: babelLoaderExcludeNodeModulesExcept([
+                    'mattermost-webapp/packages/*',
+                ]),
                 use: {
                     loader: 'babel-loader',
                     options: {
@@ -78,6 +85,32 @@ let config = {
                     },
                     {
                         loader: 'sass-loader',
+                    },
+                ],
+            },
+            {
+                test: /\.(png|eot|tiff|svg|woff2|woff|ttf|gif|mp3|jpg)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: 'files/[contenthash].[ext]',
+                        },
+                    },
+                    {
+                        loader: 'image-webpack-loader',
+                        options: {},
+                    },
+                ],
+            },
+            {
+                test: /\.apng$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: 'files/[contenthash].[ext]',
+                        },
                     },
                 ],
             },
