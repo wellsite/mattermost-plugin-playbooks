@@ -5,7 +5,7 @@ import React, {CSSProperties} from 'react';
 import {useIntl} from 'react-intl';
 import {useDispatch, useSelector} from 'react-redux';
 import styled, {css} from 'styled-components';
-import {components, ContainerProps} from 'react-select';
+import {components, ContainerProps, OptionProps} from 'react-select';
 
 import {Post} from 'mattermost-redux/types/posts';
 import {GlobalState} from 'mattermost-redux/types/store';
@@ -80,6 +80,28 @@ export const UpdateRequestPost = (props: Props) => {
         );
     };
 
+    const styles = {
+        control: (base: CSSProperties) => ({
+            ...base,
+            height: '40px',
+        }),
+        menuList: (base: CSSProperties) => ({
+            ...base,
+            backgroundColor: 'var(--center-channel-bg)',
+            border: '1px solid rgba(var(--center-channel-color-rgb), 0.16)',
+            borderRadius: '4px',
+        }),
+        option: (base: CSSProperties, state: OptionProps<Option, boolean>) => {
+            const hoverColor = 'rgba(var(--center-channel-bg-rgb), 0.92)';
+            const bgHover = state.isFocused ? hoverColor : 'transparent';
+
+            return {
+                ...base,
+                backgroundColor: state.isSelected ? hoverColor : bgHover,
+            };
+        },
+    };
+
     return (
         <>
             <StyledPostText
@@ -117,12 +139,7 @@ export const UpdateRequestPost = (props: Props) => {
                     options={options}
                     onChange={snoozeFor}
                     menuPortalTarget={document.body}
-                    styles={{
-                        control: (base: CSSProperties) => ({
-                            ...base,
-                            height: '40px',
-                        }),
-                    }}
+                    styles={styles}
                 />
             </Container>
         </>
