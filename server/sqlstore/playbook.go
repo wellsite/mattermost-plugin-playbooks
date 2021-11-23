@@ -334,10 +334,13 @@ func (p *playbookStore) GetPlaybooks() ([]app.Playbook, error) {
 	return playbooks, nil
 }
 
-// GetPlaybooksForTeam retrieves all playbooks on the specified team given the provided options.
-func (p *playbookStore) GetPlaybooksForTeam(requesterInfo app.RequesterInfo, teamID string, opts app.PlaybookFilterOptions) (app.GetPlaybooksResults, error) {
+func (p *playbookStore) buildPermissionsExpr(requesterInfo app.RequesterInfo, options app.PlaybookFilterOptions) sq.Sqlizer {
+	if requesterInfo.IsAdmin {
+		return nil
+	}
+
 	// Check that you are a playbook member or there are no restrictions.
-	permissionsAndFilter := sq.Expr(`(
+	return sq.Expr(`(
 			EXISTS(SELECT 1
 					FROM IR_PlaybookMember as pm
 					WHERE pm.PlaybookID = p.ID
@@ -346,6 +349,11 @@ func (p *playbookStore) GetPlaybooksForTeam(requesterInfo app.RequesterInfo, tea
 					FROM IR_PlaybookMember as pm
 					WHERE pm.PlaybookID = p.ID)
 		)`, requesterInfo.UserID)
+}
+
+// GetPlaybooksForTeam retrieves all playbooks on the specified team given the provided options.
+func (p *playbookStore) GetPlaybooksForTeam(requesterInfo app.RequesterInfo, teamID string, opts app.PlaybookFilterOptions) (app.GetPlaybooksResults, error) {
+	permissionsAndFilter := p.buildPermissionsExpr(requesterInfo, opts)
 	teamLimitExpr := buildTeamLimitExpr(requesterInfo.UserID, teamID, "p")
 
 	queryForResults := p.store.builder.

@@ -13,7 +13,9 @@ import (
 	"github.com/mattermost/mattermost-plugin-playbooks/server/config"
 	mock_config "github.com/mattermost/mattermost-plugin-playbooks/server/config/mocks"
 	"github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/plugin"
 	"github.com/mattermost/mattermost-server/v6/plugin/plugintest"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
@@ -33,6 +35,7 @@ func TestGetSettings(t *testing.T) {
 	mattermostHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/plugins/playbooks")
 		r.Header.Add("Mattermost-User-ID", mattermostUserID)
+		r = r.Clone(context.WithValue(context.Background(), ContextKeyPluginContext, &plugin.Context{}))
 
 		handler.ServeHTTP(w, r)
 	})
@@ -130,6 +133,7 @@ func TestSetSettings(t *testing.T) {
 	mattermostHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/plugins/playbooks")
 		r.Header.Add("Mattermost-User-ID", mattermostUserID)
+		r = r.Clone(context.WithValue(context.Background(), ContextKeyPluginContext, &plugin.Context{}))
 
 		handler.ServeHTTP(w, r)
 	})
@@ -244,6 +248,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().
@@ -336,6 +341,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().
@@ -400,6 +406,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().
@@ -432,6 +439,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().
@@ -496,6 +504,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().
@@ -529,6 +538,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().
@@ -593,6 +603,7 @@ func TestSetSettings(t *testing.T) {
 		NewSettingsHandler(handler.APIRouter, client, logger, configService)
 
 		pluginAPI.On("HasPermissionTo", mattermostUserID, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		configService.EXPECT().
 			GetConfiguration().
 			AnyTimes().

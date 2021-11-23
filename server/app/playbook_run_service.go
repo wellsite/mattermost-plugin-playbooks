@@ -683,12 +683,12 @@ func (s *PlaybookRunServiceImpl) broadcastStatusUpdate(post *model.Post, playboo
 }
 
 func (s *PlaybookRunServiceImpl) broadcastPostToRunFollowers(post *model.Post, playbookRunID, authorID string) error {
-	followers, err := s.GetFollowers(playbookRunID)
+	followerUserIDs, err := s.GetFollowers(playbookRunID)
 	if err != nil {
 		return errors.Wrapf(err, "failed to get followers for the playbook run `%s`", playbookRunID)
 	}
 
-	s.broadcastPostToUsersWithPermission(followers, post, playbookRunID, authorID)
+	s.broadcastPostToUsersWithPermission(followerUserIDs, post, playbookRunID, authorID)
 	return nil
 }
 
@@ -702,22 +702,21 @@ func (s *PlaybookRunServiceImpl) broadcastPostToAutoFollows(post *model.Post, pl
 	return nil
 }
 
-func (s *PlaybookRunServiceImpl) broadcastPostToUsersWithPermission(users []string, post *model.Post, playbookRunID, authorID string) {
-	for _, user := range users {
+func (s *PlaybookRunServiceImpl) broadcastPostToUsersWithPermission(userIDs []string, post *model.Post, playbookRunID, authorID string) {
+	for _, userID := range userIDs {
 		// Do not send update to the author
-		if user == authorID {
+		if userID == authorID {
 			continue
 		}
 		// Check for access permissions
-		if err := UserCanViewPlaybookRun(user, playbookRunID, s.playbookService, s, s.pluginAPI); err != nil {
+		if err := BackgroundUserCanViewPlaybookRun(userID, playbookRunID, s, s.pluginAPI); err != nil {
 			continue
 		}
 
 		post.Id = "" // Reset the ID so we avoid cloning the whole object
 		post.RootId = ""
-		if err := s.poster.DM(user, post); err != nil {
-			s.pluginAPI.Log.Warn("failed to broadcast post to the user",
-				"user", user, "error", err.Error())
+		if err := s.poster.DM(userID, post); err != nil {
+			s.pluginAPI.Log.Warn("failed to broadcast post to the user", "user_id", userID, "error", err.Error())
 		}
 	}
 }
@@ -2454,6 +2453,17 @@ func (s *PlaybookRunServiceImpl) GetFollowers(playbookRunID string) ([]string, e
 	}
 
 	return followers, nil
+}
+
+// UserHasPermissionToRun returns true if the user has access to the given run
+func (s *PlaybookRunServiceImpl) UserHasPermissionToRun(requesterInfo RequesterInfo, playbookRunID string) bool {
+	ok, err := s.store.UserHasPermissionToRun(requesterInfo, playbookRunID)
+	if err != nil {
+		s.pluginAPI.Log.Warn("failed to check if user has permission to run", "user", requesterInfo.UserID, "playbook_run", playbookRunID, "error", err.Error())
+		return false
+	}
+
+	return ok
 }
 
 func getUserDisplayName(user *model.User) string {

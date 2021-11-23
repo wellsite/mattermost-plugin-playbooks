@@ -544,7 +544,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team1id,
 			requesterInfo: app.RequesterInfo{
 				UserID: andrew.ID,
-				TeamID: team1id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,
@@ -564,7 +563,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team1id,
 			requesterInfo: app.RequesterInfo{
 				UserID: jon.ID,
-				TeamID: team1id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,
@@ -584,7 +582,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team1id,
 			requesterInfo: app.RequesterInfo{
 				UserID: jon.ID,
-				TeamID: team1id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:      app.SortByTitle,
@@ -605,7 +602,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team1id,
 			requesterInfo: app.RequesterInfo{
 				UserID: jon.ID,
-				TeamID: team1id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:      app.SortByStages,
@@ -622,11 +618,31 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:   "team1 from Admin, no special access",
+			name:   "team1 from lucia, as admin, access to all playbooks",
 			teamID: team1id,
 			requesterInfo: app.RequesterInfo{
 				UserID:  lucia.ID,
 				IsAdmin: true,
+			},
+			options: app.PlaybookFilterOptions{
+				Sort:    app.SortByTitle,
+				Page:    0,
+				PerPage: 1000,
+			},
+			expected: app.GetPlaybooksResults{
+				TotalCount: 4,
+				PageCount:  1,
+				HasMore:    false,
+				Items:      []app.Playbook{pb01, pb02, pb03, pb04},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:   "team1 from lucia, not as admin, no special access",
+			teamID: team1id,
+			requesterInfo: app.RequesterInfo{
+				UserID:  lucia.ID,
+				IsAdmin: false,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,
@@ -831,7 +847,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team2id,
 			requesterInfo: app.RequesterInfo{
 				UserID: matt.ID,
-				TeamID: team2id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,
@@ -851,7 +866,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team3id,
 			requesterInfo: app.RequesterInfo{
 				UserID: andrew.ID,
-				TeamID: team3id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,
@@ -891,7 +905,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: team3id,
 			requesterInfo: app.RequesterInfo{
 				UserID: desmond.ID,
-				TeamID: team3id,
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,
@@ -922,7 +935,6 @@ func TestGetPlaybooksForTeam(t *testing.T) {
 			teamID: "",
 			requesterInfo: app.RequesterInfo{
 				UserID: andrew.ID,
-				TeamID: "",
 			},
 			options: app.PlaybookFilterOptions{
 				Sort:    app.SortByTitle,

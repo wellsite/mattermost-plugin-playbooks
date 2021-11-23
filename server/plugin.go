@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/mattermost/mattermost-plugin-playbooks/server/api"
@@ -53,6 +54,7 @@ type Plugin struct {
 
 // ServeHTTP routes incoming HTTP requests to the plugin's REST API.
 func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
+	r = r.Clone(context.WithValue(context.Background(), api.ContextKeyPluginContext, c))
 	p.handler.ServeHTTP(w, r)
 }
 
@@ -62,7 +64,8 @@ func (p *Plugin) OnActivate() error {
 	p.pluginAPI = pluginAPIClient
 
 	p.config = config.NewConfigService(pluginAPIClient, manifest)
-	pluginapi.ConfigureLogrus(logrus.New(), pluginAPIClient)
+	pluginapi.ConfigureLogrus(logrus.StandardLogger(), pluginAPIClient)
+	logrus.SetLevel(logrus.DebugLevel)
 
 	botID, err := pluginAPIClient.Bot.EnsureBot(&model.Bot{
 		Username:    "playbooks",
@@ -185,6 +188,7 @@ func (p *Plugin) OnActivate() error {
 	api.NewTelemetryHandler(p.handler.APIRouter, p.playbookRunService, pluginAPIClient, p.bot, p.telemetryClient, p.playbookService, p.telemetryClient, p.telemetryClient)
 	api.NewSignalHandler(p.handler.APIRouter, pluginAPIClient, p.bot, p.playbookRunService, p.playbookService, keywordsThreadIgnorer)
 	api.NewSettingsHandler(p.handler.APIRouter, pluginAPIClient, p.bot, p.config)
+	api.NewSudoHandler(p.handler.APIRouter, pluginAPIClient, p.bot, p.config)
 
 	isTestingEnabled := false
 	flag := p.API.GetConfig().ServiceSettings.EnableTesting

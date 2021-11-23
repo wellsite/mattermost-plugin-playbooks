@@ -867,6 +867,7 @@ func (s *playbookRunStore) SetBroadcastChannelIDsToRootID(playbookRunID string, 
 }
 
 func (s *playbookRunStore) buildPermissionsExpr(info app.RequesterInfo) sq.Sqlizer {
+	// Admins may choose to have unrestricted access.
 	if info.IsAdmin {
 		return nil
 	}
@@ -1127,6 +1128,26 @@ func (s *playbookRunStore) GetFollowers(playbookRunID string) ([]string, error) 
 	}
 
 	return followers, nil
+}
+
+func (s *playbookRunStore) UserHasPermissionToRun(requesterInfo app.RequesterInfo, playbookRunID string) (bool, error) {
+	permissionsExpr := s.buildPermissionsExpr(requesterInfo)
+
+	query := s.queryBuilder.
+		Select("TRUE").
+		From("IR_Incident i").
+		Where(sq.Eq{"i.ID": playbookRunID}).
+		Where(permissionsExpr)
+
+	var hasPermission bool
+	err := s.store.getBuilder(s.store.db, &hasPermission, query)
+	if err == sql.ErrNoRows {
+		return false, nil
+	} else if err != nil {
+		return false, errors.Wrapf(err, "failed to check playbook run permissions for playbook run id '%s'", playbookRunID)
+	}
+
+	return hasPermission, nil
 }
 
 func toSQLPlaybookRun(playbookRun app.PlaybookRun) (*sqlPlaybookRun, error) {

@@ -13,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	icClient "github.com/mattermost/mattermost-plugin-playbooks/client"
 	"github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/plugin"
 	"github.com/mattermost/mattermost-server/v6/plugin/plugintest"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -45,6 +46,7 @@ func TestPlaybookRuns(t *testing.T) {
 	mattermostHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/plugins/playbooks")
 		r.Header.Add("Mattermost-User-ID", mattermostUserID)
+		r = r.Clone(context.WithValue(context.Background(), ContextKeyPluginContext, &plugin.Context{}))
 
 		handler.ServeHTTP(w, r)
 	})
@@ -1159,6 +1161,7 @@ func TestPlaybookRuns(t *testing.T) {
 		}
 
 		pluginAPI.On("HasPermissionTo", mock.Anything, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("HasPermissionToChannel", mock.Anything, mock.Anything, model.PermissionReadChannel).Return(false)
 		pluginAPI.On("GetChannel", mock.Anything).Return(&model.Channel{}, nil)
 		playbookRunService.EXPECT().GetPlaybookRunIDForChannel(testPlaybookRun.ChannelID).Return(testPlaybookRun.ID, nil).Times(2)
@@ -1396,6 +1399,7 @@ func TestPlaybookRuns(t *testing.T) {
 		}
 
 		pluginAPI.On("HasPermissionTo", mock.Anything, model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		playbookRunService.EXPECT().GetPlaybookRun(playbookID).Return(&testPlaybookRun, nil).Times(2)
 		pluginAPI.On("HasPermissionToChannel", mock.Anything, mock.Anything, model.PermissionReadChannel).Return(false)
 		playbookService.EXPECT().Get(testPlaybookRun.ID).Return(testPlaybook, nil)

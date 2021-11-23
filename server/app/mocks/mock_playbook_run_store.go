@@ -396,3 +396,18 @@ func (mr *MockPlaybookRunStoreMockRecorder) UpdateTimelineEvent(arg0 interface{}
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTimelineEvent", reflect.TypeOf((*MockPlaybookRunStore)(nil).UpdateTimelineEvent), arg0)
 }
+
+// UserHasPermissionToRun mocks base method
+func (m *MockPlaybookRunStore) UserHasPermissionToRun(arg0 app.RequesterInfo, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserHasPermissionToRun", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserHasPermissionToRun indicates an expected call of UserHasPermissionToRun
+func (mr *MockPlaybookRunStoreMockRecorder) UserHasPermissionToRun(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserHasPermissionToRun", reflect.TypeOf((*MockPlaybookRunStore)(nil).UserHasPermissionToRun), arg0, arg1)
+}

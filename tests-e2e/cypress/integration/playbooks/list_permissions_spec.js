@@ -255,7 +255,7 @@ describe('playbooks > list permissions', () => {
         verifyRunIsVisible(runCond9);
     });
 
-    it('restricts some runs frm testUser2', () => {
+    it('restricts some runs from testUser2', () => {
         // # Login as testUser2
         cy.apiLogin(testUser2);
 
@@ -270,9 +270,26 @@ describe('playbooks > list permissions', () => {
         verifyRunIsNotVisible(runCond9);
     });
 
-    it('shows all runs to sysadmin', () => {
+    it('restricts some runs from sysadmin without sudo', () => {
         // # Login as sysadmin
         cy.apiAdminLogin();
+
+        verifyRunIsVisible(runCond1);
+        verifyRunIsVisible(runCond2);
+        verifyRunIsNotVisible(runCond3);
+        verifyRunIsVisible(runCond4);
+        verifyRunIsNotVisible(runCond5);
+        verifyRunIsVisible(runCond6);
+        verifyRunIsNotVisible(runCond7);
+        verifyRunIsNotVisible(runCond8);
+        verifyRunIsNotVisible(runCond9);
+    });
+
+    it('shows runs to sysadmin with sudo', () => {
+        // # Login as sysadmin
+        cy.apiAdminLogin();
+
+        cy.sudo();
 
         verifyRunIsVisible(runCond1);
         verifyRunIsVisible(runCond2);
@@ -283,6 +300,24 @@ describe('playbooks > list permissions', () => {
         verifyRunIsVisible(runCond7);
         verifyRunIsVisible(runCond8);
         verifyRunIsVisible(runCond9);
+    });
+
+    it('restricts some runs from sysadmin after dropping sudo', () => {
+        // # Login as sysadmin
+        cy.apiAdminLogin();
+
+        cy.sudo();
+        cy.dropSudo();
+
+        verifyRunIsVisible(runCond1);
+        verifyRunIsVisible(runCond2);
+        verifyRunIsNotVisible(runCond3);
+        verifyRunIsVisible(runCond4);
+        verifyRunIsNotVisible(runCond5);
+        verifyRunIsVisible(runCond6);
+        verifyRunIsNotVisible(runCond7);
+        verifyRunIsNotVisible(runCond8);
+        verifyRunIsNotVisible(runCond9);
     });
 });
 

@@ -552,6 +552,9 @@ type PlaybookRunService interface {
 
 	// RestorePlaybookRun reverts a run from the Finished state. If run was not in Finished state, the call is a noop.
 	RestorePlaybookRun(playbookRunID, userID string) error
+
+	// UserHasPermissionToRun returns true if the user has access to the given run
+	UserHasPermissionToRun(requesterInfo RequesterInfo, playbookRunID string) bool
 }
 
 // PlaybookRunStore defines the methods the PlaybookRunServiceImpl needs from the interfaceStore.
@@ -635,6 +638,9 @@ type PlaybookRunStore interface {
 
 	// GetFollowers returns list of followers for a specific playbook run
 	GetFollowers(playbookRunID string) ([]string, error)
+
+	// UserHasPermissionToRun return true if the user has permission to the given run.
+	UserHasPermissionToRun(requesterInfo RequesterInfo, playbookRunID string) (bool, error)
 }
 
 // PlaybookRunTelemetry defines the methods that the PlaybookRunServiceImpl needs from the RudderTelemetry.

@@ -368,3 +368,25 @@ Cypress.Commands.add('apiArchivePlaybook', (playbookId) => {
         expect(response.status).to.equal(204);
     });
 });
+
+// Promote sysadmin to sudo
+Cypress.Commands.add('sudo', () => (
+    cy.request({
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        url: '/plugins/playbooks/api/v0/sudo',
+        method: 'POST'
+    }).then((response) => {
+        expect(response.status).to.equal(200);
+    })
+));
+
+// Drop sysadmin sudo
+Cypress.Commands.add('dropSudo', () => (
+    cy.request({
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        url: '/plugins/playbooks/api/v0/sudo',
+        method: 'DELETE'
+    }).then((response) => {
+        expect(response.status).to.equal(200);
+    })
+));

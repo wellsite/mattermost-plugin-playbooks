@@ -767,3 +767,17 @@ func (mr *MockPlaybookRunServiceMockRecorder) UserHasLeftChannel(arg0, arg1, arg
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserHasLeftChannel", reflect.TypeOf((*MockPlaybookRunService)(nil).UserHasLeftChannel), arg0, arg1, arg2)
 }
+
+// UserHasPermissionToRun mocks base method
+func (m *MockPlaybookRunService) UserHasPermissionToRun(arg0 app.RequesterInfo, arg1 string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserHasPermissionToRun", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// UserHasPermissionToRun indicates an expected call of UserHasPermissionToRun
+func (mr *MockPlaybookRunServiceMockRecorder) UserHasPermissionToRun(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserHasPermissionToRun", reflect.TypeOf((*MockPlaybookRunService)(nil).UserHasPermissionToRun), arg0, arg1)
+}

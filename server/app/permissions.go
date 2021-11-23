@@ -15,64 +15,65 @@ var ErrNoPermissions = errors.New("does not have permissions")
 // ErrLicensedFeature if the error is caused by the server not having the needed license for the feature
 var ErrLicensedFeature = errors.New("not covered by current server license")
 
-// RequesterInfo holds the userID and teamID that this request is regarding, and permissions
-// for the user making the request
+// RequesterInfo holds the userID that this request is regarding, and permissions for the user
+// making the request
 type RequesterInfo struct {
 	UserID  string
-	TeamID  string
 	IsAdmin bool
 	IsGuest bool
 }
 
-// UserCanViewPlaybookRun returns nil if the userID has permissions to view the playbook run
-// associated with playbookRunID
-func UserCanViewPlaybookRun(userID, playbookRunID string, playbookService PlaybookService, playbookRunService PlaybookRunService, pluginAPI *pluginapi.Client) error {
-	if pluginAPI.User.HasPermissionTo(userID, model.PermissionManageSystem) {
-		return nil
-	}
-
-	playbookRun, err := playbookRunService.GetPlaybookRun(playbookRunID)
+// UserCanViewPlaybookRun returns nil if the given user and session has permissions to view the
+// playbook run associated with playbookRunID.
+func UserCanViewPlaybookRun(userID, sessionID, playbookRunID string, playbookRunService PlaybookRunService, pluginAPI *pluginapi.Client) error {
+	requesterInfo, err := GetRequesterInfo(userID, sessionID, pluginAPI)
 	if err != nil {
-		return errors.Wrapf(err, "Unable to get playbookRun to determine permissions, playbookRun id `%s`", playbookRunID)
+		return err
 	}
 
-	if pluginAPI.User.HasPermissionToChannel(userID, playbookRun.ChannelID, model.PermissionReadChannel) {
-		return nil
-	}
-
-	return PlaybookAccess(userID, playbookRun.PlaybookID, playbookService, pluginAPI)
+	return userCanViewPlaybookRun(requesterInfo, playbookRunID, playbookRunService, pluginAPI)
 }
 
-// UserCanViewPlaybookRunFromChannelID returns nil if the userID has permissions to view the playbook run
-// associated with channelID
-func UserCanViewPlaybookRunFromChannelID(userID, channelID string, playbookService PlaybookService, playbookRunService PlaybookRunService, pluginAPI *pluginapi.Client) error {
-	if pluginAPI.User.HasPermissionTo(userID, model.PermissionManageSystem) {
+// BackgroundUserCanViewPlaybookRun returns nil if the given user without a session has permissions to view the
+// playbook run associated with playbookRunID.
+func BackgroundUserCanViewPlaybookRun(userID, playbookRunID string, playbookRunService PlaybookRunService, pluginAPI *pluginapi.Client) error {
+	requesterInfo, err := GetCommandRequesterInfo(userID, pluginAPI)
+	if err != nil {
+		return err
+	}
+
+	return userCanViewPlaybookRun(requesterInfo, playbookRunID, playbookRunService, pluginAPI)
+}
+
+// userCanViewPlaybookRun returns nil if the given user and session has permissions to view the
+// playbook run associated with playbookRunID.
+func userCanViewPlaybookRun(requesterInfo RequesterInfo, playbookRunID string, playbookRunService PlaybookRunService, pluginAPI *pluginapi.Client) error {
+	if playbookRunService.UserHasPermissionToRun(requesterInfo, playbookRunID) {
 		return nil
 	}
 
-	if pluginAPI.User.HasPermissionToChannel(userID, channelID, model.PermissionReadChannel) {
-		return nil
-	}
-
-	playbookRunID, err := playbookRunService.GetPlaybookRunIDForChannel(channelID)
-	if err != nil {
-		return errors.Wrapf(err, "Unable to get playbookRunID to determine permissions, channel id `%s`", channelID)
-	}
-
-	playbookRun, err := playbookRunService.GetPlaybookRun(playbookRunID)
-	if err != nil {
-		return errors.Wrapf(err, "Unable to get channel to determine permissions, channel id `%s`", channelID)
-	}
-
-	return PlaybookAccess(userID, playbookRun.PlaybookID, playbookService, pluginAPI)
+	return errors.Wrap(ErrNoPermissions, "view playbook run")
 }
 
 // EditPlaybookRun returns nil if the userID has permissions to edit channelID
-func EditPlaybookRun(userID, channelID string, pluginAPI *pluginapi.Client) error {
-	if pluginAPI.User.HasPermissionTo(userID, model.PermissionManageSystem) {
+func EditPlaybookRun(userID, sessionID, channelID string, pluginAPI *pluginapi.Client) error {
+	if IsActingAsAdmin(userID, sessionID, pluginAPI) {
 		return nil
 	}
 
+	return editPlaybookRun(userID, channelID, pluginAPI)
+}
+
+// EditPlaybookRun returns nil if the userID has permissions to edit channelID
+func CommandEditPlaybookRun(userID, channelID string, pluginAPI *pluginapi.Client) error {
+	if IsAdmin(userID, pluginAPI) {
+		return nil
+	}
+
+	return editPlaybookRun(userID, channelID, pluginAPI)
+}
+
+func editPlaybookRun(userID, channelID string, pluginAPI *pluginapi.Client) error {
 	if pluginAPI.User.HasPermissionToChannel(userID, channelID, model.PermissionReadChannel) {
 		return nil
 	}
@@ -88,6 +89,11 @@ func CanViewTeam(userID, teamID string, pluginAPI *pluginapi.Client) bool {
 // IsAdmin returns true if the userID is a system admin
 func IsAdmin(userID string, pluginAPI *pluginapi.Client) bool {
 	return pluginAPI.User.HasPermissionTo(userID, model.PermissionManageSystem)
+}
+
+// IsActingAsAdmin returns true if the userID is a system admin and has elevated sudo privileges
+func IsActingAsAdmin(userID, sessionID string, pluginAPI *pluginapi.Client) bool {
+	return IsAdmin(userID, pluginAPI) && HasSudo(sessionID, pluginAPI)
 }
 
 // IsGuest returns true if the userID is a system guest
@@ -108,8 +114,23 @@ func CanPostToChannel(userID, channelID string, pluginAPI *pluginapi.Client) boo
 	return pluginAPI.User.HasPermissionToChannel(userID, channelID, model.PermissionCreatePost)
 }
 
-func GetRequesterInfo(userID string, pluginAPI *pluginapi.Client) (RequesterInfo, error) {
+func GetCommandRequesterInfo(userID string, pluginAPI *pluginapi.Client) (RequesterInfo, error) {
 	isAdmin := IsAdmin(userID, pluginAPI)
+
+	isGuest, err := IsGuest(userID, pluginAPI)
+	if err != nil {
+		return RequesterInfo{}, err
+	}
+
+	return RequesterInfo{
+		UserID:  userID,
+		IsAdmin: isAdmin,
+		IsGuest: isGuest,
+	}, nil
+}
+
+func GetRequesterInfo(userID, sessionID string, pluginAPI *pluginapi.Client) (RequesterInfo, error) {
+	isAdmin := IsActingAsAdmin(userID, sessionID, pluginAPI)
 
 	isGuest, err := IsGuest(userID, pluginAPI)
 	if err != nil {
@@ -334,9 +355,8 @@ func PlaybookModify(userID string, playbook, oldPlaybook Playbook, cfgService co
 	return nil
 }
 
-func ModifyPlaybookCreators(userID string, isAdmin bool, config config.Service) error {
-	// Admins are always allowed to modify settings.
-	if isAdmin {
+func ModifyPlaybookCreators(userID, sessionID string, config config.Service, pluginAPI *pluginapi.Client) error {
+	if IsActingAsAdmin(userID, sessionID, pluginAPI) {
 		return nil
 	}
 

@@ -8,7 +8,7 @@ Cypress.Commands.overwrite('reload', (originalFn, forceReload, options, duration
     cy.wait(duration);
 });
 
-Cypress.Commands.overwrite('visit', (originalFn, url, options, duration = TIMEOUTS.THREE_SEC) => {
-    originalFn(url, options);
-    cy.wait(duration);
-});
+// Cypress.Commands.overwrite('visit', (originalFn, url, options, duration = TIMEOUTS.THREE_SEC) => {
+//     originalFn(url, options);
+//     cy.wait(duration);
+// });

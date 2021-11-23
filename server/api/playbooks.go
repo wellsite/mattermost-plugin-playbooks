@@ -384,10 +384,10 @@ func (h *PlaybookHandler) getPlaybooks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requesterInfo := app.RequesterInfo{
-		UserID:  userID,
-		TeamID:  teamID,
-		IsAdmin: app.IsAdmin(userID, h.pluginAPI),
+	requesterInfo, err := app.GetRequesterInfo(userID, getSessionIDFromRequest(r), h.pluginAPI)
+	if err != nil {
+		h.HandleError(w, err)
+		return
 	}
 
 	playbookResults, err := h.playbookService.GetPlaybooksForTeam(requesterInfo, teamID, opts)
@@ -409,10 +409,10 @@ func (h *PlaybookHandler) getPlaybooksAutoComplete(w http.ResponseWriter, r *htt
 		return
 	}
 
-	requesterInfo := app.RequesterInfo{
-		UserID:  userID,
-		TeamID:  teamID,
-		IsAdmin: app.IsAdmin(userID, h.pluginAPI),
+	requesterInfo, err := app.GetCommandRequesterInfo(userID, h.pluginAPI)
+	if err != nil {
+		h.HandleError(w, err)
+		return
 	}
 
 	playbooksResult, err := h.playbookService.GetPlaybooksForTeam(requesterInfo, teamID, app.PlaybookFilterOptions{

@@ -18,9 +18,11 @@ import (
 	"github.com/mattermost/mattermost-plugin-playbooks/server/config"
 	mock_config "github.com/mattermost/mattermost-plugin-playbooks/server/config/mocks"
 	"github.com/mattermost/mattermost-server/v6/model"
+	"github.com/mattermost/mattermost-server/v6/plugin"
 	"github.com/mattermost/mattermost-server/v6/plugin/plugintest"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	pluginapi "github.com/mattermost/mattermost-plugin-api"
@@ -130,6 +132,7 @@ func TestPlaybooks(t *testing.T) {
 	mattermostHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/plugins/playbooks")
 		r.Header.Add("Mattermost-User-ID", mattermostUserID)
+		r = r.Clone(context.WithValue(context.Background(), ContextKeyPluginContext, &plugin.Context{}))
 
 		handler.ServeHTTP(w, r)
 	})
@@ -695,6 +698,7 @@ func TestPlaybooks(t *testing.T) {
 		}, nil)
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 		id, err := c.Playbooks.Create(context.TODO(), icClient.PlaybookCreateOptions{
@@ -765,6 +769,7 @@ func TestPlaybooks(t *testing.T) {
 		}, nil)
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 		id, err := c.Playbooks.Create(context.TODO(), icClient.PlaybookCreateOptions{
@@ -831,6 +836,7 @@ func TestPlaybooks(t *testing.T) {
 		}, nil)
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 		id, err := c.Playbooks.Create(context.TODO(), icClient.PlaybookCreateOptions{
@@ -891,7 +897,6 @@ func TestPlaybooks(t *testing.T) {
 			GetPlaybooksForTeam(
 				app.RequesterInfo{
 					UserID:  "testuserid",
-					TeamID:  "testteamid",
 					IsAdmin: true,
 				},
 				"testteamid",
@@ -902,6 +907,7 @@ func TestPlaybooks(t *testing.T) {
 
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 		actualList, err := c.Playbooks.List(context.TODO(), "testteamid", 0, 100, icClient.PlaybookListOptions{})
@@ -936,7 +942,6 @@ func TestPlaybooks(t *testing.T) {
 			GetPlaybooksForTeam(
 				app.RequesterInfo{
 					UserID:  "testuserid",
-					TeamID:  "testteamid",
 					IsAdmin: true,
 				},
 				"testteamid",
@@ -947,6 +952,7 @@ func TestPlaybooks(t *testing.T) {
 
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{Roles: "system_guest"}, nil)
 
 		actualList, err := c.Playbooks.List(context.TODO(), "testteamid", 0, 100, icClient.PlaybookListOptions{})
@@ -973,7 +979,6 @@ func TestPlaybooks(t *testing.T) {
 			GetPlaybooksForTeam(
 				app.RequesterInfo{
 					UserID:  "testuserid",
-					TeamID:  "testteamid",
 					IsAdmin: true,
 				},
 				"testteamid",
@@ -984,6 +989,7 @@ func TestPlaybooks(t *testing.T) {
 
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 		actualList, err := c.Playbooks.List(context.TODO(), "testteamid", 0, 100, icClient.PlaybookListOptions{})
@@ -1034,6 +1040,7 @@ func TestPlaybooks(t *testing.T) {
 
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 
 		for _, channelID := range withBroadcastChannel.BroadcastChannelIDs {
 			pluginAPI.On("HasPermissionToChannel", "testuserid", channelID, model.PermissionCreatePost).Return(false)
@@ -1180,6 +1187,7 @@ func TestPlaybooks(t *testing.T) {
 		}, nil)
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 
 		handler.ServeHTTP(testrecorder, testreq)
 
@@ -1244,6 +1252,7 @@ func TestPlaybooks(t *testing.T) {
 		}, nil)
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 		pluginAPI.On("LogWarn", "group does not allow references, removing from automated invite list", "group_id", "testInvitedGroupID2")
 
 		handler.ServeHTTP(testrecorder, testreq)
@@ -1272,6 +1281,7 @@ func TestPlaybooks(t *testing.T) {
 
 		pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 		pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+		pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 
 		err := c.Playbooks.Archive(context.TODO(), "testplaybookid")
 		require.NoError(t, err)
@@ -1496,7 +1506,6 @@ func TestPlaybooks(t *testing.T) {
 			GetPlaybooksForTeam(
 				app.RequesterInfo{
 					UserID:  "testuserid",
-					TeamID:  "testteamid",
 					IsAdmin: false,
 				},
 				"testteamid",
@@ -1629,6 +1638,7 @@ func TestSortingPlaybooks(t *testing.T) {
 	mattermostHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/plugins/playbooks")
 		r.Header.Add("Mattermost-User-ID", "testuserid")
+		r = r.Clone(context.WithValue(context.Background(), ContextKeyPluginContext, &plugin.Context{}))
 
 		handler.ServeHTTP(w, r)
 	})
@@ -1775,7 +1785,6 @@ func TestSortingPlaybooks(t *testing.T) {
 				GetPlaybooksForTeam(
 					app.RequesterInfo{
 						UserID:  "testuserid",
-						TeamID:  "testteamid",
 						IsAdmin: true,
 					},
 					"testteamid",
@@ -1786,6 +1795,7 @@ func TestSortingPlaybooks(t *testing.T) {
 
 			pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 			pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+			pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 			pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 			actualList, err := c.Playbooks.List(context.TODO(), "testteamid", 0, 100, icClient.PlaybookListOptions{
@@ -1850,6 +1860,7 @@ func TestPagingPlaybooks(t *testing.T) {
 	mattermostHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, "/plugins/playbooks")
 		r.Header.Add("Mattermost-User-ID", "testuserid")
+		r = r.Clone(context.WithValue(context.Background(), ContextKeyPluginContext, &plugin.Context{}))
 
 		handler.ServeHTTP(w, r)
 	})
@@ -2010,7 +2021,6 @@ func TestPagingPlaybooks(t *testing.T) {
 				GetPlaybooksForTeam(
 					app.RequesterInfo{
 						UserID:  "testuserid",
-						TeamID:  "testteamid",
 						IsAdmin: true,
 					},
 					"testteamid",
@@ -2021,6 +2031,7 @@ func TestPagingPlaybooks(t *testing.T) {
 
 			pluginAPI.On("HasPermissionToTeam", "testuserid", "testteamid", model.PermissionViewTeam).Return(true)
 			pluginAPI.On("HasPermissionTo", "testuserid", model.PermissionManageSystem).Return(true)
+			pluginAPI.On("KVGet", mock.Anything).Return([]byte("true"), nil)
 			pluginAPI.On("GetUser", "testuserid").Return(&model.User{}, nil)
 
 			actualList, err := c.Playbooks.List(context.TODO(), "testteamid", data.page, data.perPage, icClient.PlaybookListOptions{})

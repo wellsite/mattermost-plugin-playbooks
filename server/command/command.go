@@ -229,7 +229,6 @@ func (r *Runner) actionRun(args []string) {
 
 	requesterInfo := app.RequesterInfo{
 		UserID:  r.args.UserId,
-		TeamID:  r.args.TeamId,
 		IsAdmin: app.IsAdmin(r.args.UserId, r.pluginAPI),
 	}
 
@@ -275,7 +274,6 @@ func (r *Runner) actionRunPlaybook(args []string) {
 
 	requesterInfo := app.RequesterInfo{
 		UserID:  r.args.UserId,
-		TeamID:  r.args.TeamId,
 		IsAdmin: app.IsAdmin(r.args.UserId, r.pluginAPI),
 	}
 
@@ -529,7 +527,7 @@ func (r *Runner) actionList() {
 		return
 	}
 
-	requesterInfo, err := app.GetRequesterInfo(r.args.UserId, r.pluginAPI)
+	requesterInfo, err := app.GetCommandRequesterInfo(r.args.UserId, r.pluginAPI)
 	if err != nil {
 		r.warnUserAndLogErrorf("Error resolving permissions: %v", err)
 		return
@@ -663,7 +661,7 @@ func (r *Runner) actionFinish() {
 		return
 	}
 
-	if err = app.EditPlaybookRun(r.args.UserId, r.args.ChannelId, r.pluginAPI); err != nil {
+	if err = app.CommandEditPlaybookRun(r.args.UserId, r.args.ChannelId, r.pluginAPI); err != nil {
 		if errors.Is(err, app.ErrNoPermissions) {
 			r.postCommandResponse(fmt.Sprintf("userID `%s` is not an admin or channel member", r.args.UserId))
 			return
@@ -690,7 +688,7 @@ func (r *Runner) actionUpdate() {
 		return
 	}
 
-	if err = app.EditPlaybookRun(r.args.UserId, r.args.ChannelId, r.pluginAPI); err != nil {
+	if err = app.CommandEditPlaybookRun(r.args.UserId, r.args.ChannelId, r.pluginAPI); err != nil {
 		if errors.Is(err, app.ErrNoPermissions) {
 			r.postCommandResponse(fmt.Sprintf("userID `%s` is not an admin or channel member", r.args.UserId))
 			return
@@ -1701,7 +1699,6 @@ func (r *Runner) generateTestData(numActivePlaybookRuns, numEndedPlaybookRuns in
 
 	requesterInfo := app.RequesterInfo{
 		UserID:  r.args.UserId,
-		TeamID:  r.args.TeamId,
 		IsAdmin: app.IsAdmin(r.args.UserId, r.pluginAPI),
 	}
 
