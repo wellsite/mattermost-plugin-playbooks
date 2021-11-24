@@ -274,15 +274,15 @@ describe('playbooks > list permissions', () => {
         // # Login as sysadmin
         cy.apiAdminLogin();
 
-        verifyRunIsVisible(runCond1);
-        verifyRunIsVisible(runCond2);
-        verifyRunIsNotVisible(runCond3);
-        verifyRunIsVisible(runCond4);
-        verifyRunIsNotVisible(runCond5);
-        verifyRunIsVisible(runCond6);
-        verifyRunIsNotVisible(runCond7);
-        verifyRunIsNotVisible(runCond8);
-        verifyRunIsNotVisible(runCond9);
+        verifyRunIsVisible(runCond1); // this playbook is public, even though the channel is private
+        verifyRunIsVisible(runCond2); // this playbook and channel are both public
+        verifyRunIsNotVisible(runCond3); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runCond4); // this user is not a member of the playbook nor public channel
+        verifyRunIsNotVisible(runCond5); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runCond6); // this user it not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runCond7); // this user is not a member of the playbook, despite the channel being public
+        verifyRunIsNotVisible(runCond8); // this user is not a member of team 2
+        verifyRunIsNotVisible(runCond9); // this uesr is not a member of team 2
     });
 
     it('shows runs to sysadmin with sudo', () => {
@@ -309,15 +309,15 @@ describe('playbooks > list permissions', () => {
         cy.sudo();
         cy.dropSudo();
 
-        verifyRunIsVisible(runCond1);
-        verifyRunIsVisible(runCond2);
-        verifyRunIsNotVisible(runCond3);
-        verifyRunIsVisible(runCond4);
-        verifyRunIsNotVisible(runCond5);
-        verifyRunIsVisible(runCond6);
-        verifyRunIsNotVisible(runCond7);
-        verifyRunIsNotVisible(runCond8);
-        verifyRunIsNotVisible(runCond9);
+        verifyRunIsVisible(runCond1); // this playbook is public, even though the channel is private
+        verifyRunIsVisible(runCond2); // this playbook and channel are both public
+        verifyRunIsNotVisible(runCond3); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runCond4); // this user is not a member of the playbook nor public channel
+        verifyRunIsNotVisible(runCond5); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runCond6); // this user it not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runCond7); // this user is not a member of the playbook, despite the channel being public
+        verifyRunIsNotVisible(runCond8); // this user is not a member of team 2
+        verifyRunIsNotVisible(runCond9); // this uesr is not a member of team 2
     });
 });
 

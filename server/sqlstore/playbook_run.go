@@ -874,12 +874,12 @@ func (s *playbookRunStore) buildPermissionsExpr(info app.RequesterInfo) sq.Sqliz
 
 	// Guests must be channel members
 	if info.IsGuest {
-		return sq.Expr(`
-			  EXISTS(SELECT 1
-						 FROM ChannelMembers as cm
-						 WHERE cm.ChannelId = i.ChannelID
-						   AND cm.UserId = ?)
-		`, info.UserID)
+		return sq.Expr(`EXISTS(
+			SELECT 1
+			FROM ChannelMembers as cm
+			WHERE cm.ChannelId = i.ChannelID
+			AND cm.UserId = ?
+		)`, info.UserID)
 	}
 
 	// 1. Is the user a channel member? If so, they have permission to view the run.
