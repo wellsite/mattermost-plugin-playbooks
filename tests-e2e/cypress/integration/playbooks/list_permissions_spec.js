@@ -24,15 +24,9 @@ describe('playbooks > list permissions', () => {
     let pbPublicTestTeam2PublicChan; // Condition 9
 
     // Run names corresponding to conditions:
-    let runCond1;
-    let runCond2;
-    let runCond3;
-    let runCond4;
-    let runCond5;
-    let runCond6;
-    let runCond7;
-    let runCond8;
-    let runCond9;
+    const runs = [];
+    const runPublicPrivateChan = 0;
+    const
 
     before(() => {
         cy.apiInitSetup().then(({team, user}) => {
@@ -74,7 +68,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 1`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond1 = resp;
+                        runs[0] = resp;
                     });
                 });
 
@@ -93,7 +87,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 2`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond2 = resp;
+                        runs[1] = resp;
                     });
                 });
 
@@ -112,7 +106,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 3`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond3 = resp;
+                        runs[2] = resp;
                     });
                 });
 
@@ -131,7 +125,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 4`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond4 = resp;
+                        runs[3] = resp;
                     });
                 });
 
@@ -150,7 +144,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 5`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond5 = resp;
+                        runs[4] = resp;
                     });
                 });
 
@@ -171,7 +165,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 6`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond6 = resp;
+                        runs[5] = resp;
                     });
                 });
 
@@ -190,7 +184,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 7`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond7 = resp;
+                        runs[6] = resp;
                     });
                 });
 
@@ -209,7 +203,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 8`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond8 = resp;
+                        runs[7] = resp;
                     });
                 });
 
@@ -228,7 +222,7 @@ describe('playbooks > list permissions', () => {
                         playbookRunName: `${runNamePrefix} Condition 9`,
                         ownerUserId: testUser.id,
                     }).then((resp) => {
-                        runCond9 = resp;
+                        runs[8] = resp;
                     });
                 });
             });
@@ -240,49 +234,65 @@ describe('playbooks > list permissions', () => {
         cy.viewport('macbook-13');
     });
 
-    it('shows all runs to testUser', () => {
-        // # Login as testUser
-        cy.apiLogin(testUser);
+    describe.only('shows all runs to testUser', () => {
 
-        verifyRunIsVisible(runCond1);
-        verifyRunIsVisible(runCond2);
-        verifyRunIsVisible(runCond3);
-        verifyRunIsVisible(runCond4);
-        verifyRunIsVisible(runCond5);
-        verifyRunIsVisible(runCond6);
-        verifyRunIsVisible(runCond7);
-        verifyRunIsVisible(runCond8);
-        verifyRunIsVisible(runCond9);
+        before(() => {
+            // # Login as testUser
+            cy.apiLogin(testUser);
+        });
+
+        const expectedRuns = {
+            0: true,
+            1: true,
+            2: true,
+            3: true,
+            4: true,
+            5: true,
+            6: true,
+            7: true,
+            8: true,
+        }
+        for (let i in expectedRuns) {
+            if (expectedRuns[i]) {
+                it(`shows run${i}`, () => {
+                    verifyRunIsVisible(runs[i]);
+                });
+            } else {
+                it(`hides run${i}`, () => {
+                    verifyRunIsNotVisible(runs[i]);
+                })
+            }
+        }
     });
 
     it('restricts some runs from testUser2', () => {
         // # Login as testUser2
         cy.apiLogin(testUser2);
 
-        verifyRunIsVisible(runCond1);
-        verifyRunIsVisible(runCond2);
-        verifyRunIsVisible(runCond3);
-        verifyRunIsVisible(runCond4);
-        verifyRunIsNotVisible(runCond5);
-        verifyRunIsVisible(runCond6);
-        verifyRunIsNotVisible(runCond7);
-        verifyRunIsNotVisible(runCond8);
-        verifyRunIsNotVisible(runCond9);
+        verifyRunIsVisible(runs[0]);
+        verifyRunIsVisible(runs[1]);
+        verifyRunIsVisible(runs[2]);
+        verifyRunIsVisible(runs[3]);
+        verifyRunIsNotVisible(runs[4]);
+        verifyRunIsVisible(runs[5]);
+        verifyRunIsNotVisible(runs[6]);
+        verifyRunIsNotVisible(runs[7]);
+        verifyRunIsNotVisible(runs[8]);
     });
 
     it('restricts some runs from sysadmin without sudo', () => {
         // # Login as sysadmin
         cy.apiAdminLogin();
 
-        verifyRunIsVisible(runCond1); // this playbook is public, even though the channel is private
-        verifyRunIsVisible(runCond2); // this playbook and channel are both public
-        verifyRunIsNotVisible(runCond3); // this user is not a member of the playbook nor private channel
-        verifyRunIsNotVisible(runCond4); // this user is not a member of the playbook nor public channel
-        verifyRunIsNotVisible(runCond5); // this user is not a member of the playbook nor private channel
-        verifyRunIsNotVisible(runCond6); // this user it not a member of the playbook nor private channel
-        verifyRunIsNotVisible(runCond7); // this user is not a member of the playbook, despite the channel being public
-        verifyRunIsNotVisible(runCond8); // this user is not a member of team 2
-        verifyRunIsNotVisible(runCond9); // this uesr is not a member of team 2
+        verifyRunIsVisible(runs[0]); // this playbook is public, even though the channel is private
+        verifyRunIsVisible(runs[1]); // this playbook and channel are both public
+        verifyRunIsNotVisible(runs[2]); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runs[3]); // this user is not a member of the playbook nor public channel
+        verifyRunIsNotVisible(runs[4]); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runs[5]); // this user it not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runs[6]); // this user is not a member of the playbook, despite the channel being public
+        verifyRunIsNotVisible(runs[7]); // this user is not a member of team 2
+        verifyRunIsNotVisible(runs[8]); // this uesr is not a member of team 2
     });
 
     it('shows runs to sysadmin with sudo', () => {
@@ -291,15 +301,15 @@ describe('playbooks > list permissions', () => {
 
         cy.sudo();
 
-        verifyRunIsVisible(runCond1);
-        verifyRunIsVisible(runCond2);
-        verifyRunIsVisible(runCond3);
-        verifyRunIsVisible(runCond4);
-        verifyRunIsVisible(runCond5);
-        verifyRunIsVisible(runCond6);
-        verifyRunIsVisible(runCond7);
-        verifyRunIsVisible(runCond8);
-        verifyRunIsVisible(runCond9);
+        verifyRunIsVisible(runs[0]);
+        verifyRunIsVisible(runs[1]);
+        verifyRunIsVisible(runs[2]);
+        verifyRunIsVisible(runs[3]);
+        verifyRunIsVisible(runs[4]);
+        verifyRunIsVisible(runs[5]);
+        verifyRunIsVisible(runs[6]);
+        verifyRunIsVisible(runs[7]);
+        verifyRunIsVisible(runs[8]);
     });
 
     it('restricts some runs from sysadmin after dropping sudo', () => {
@@ -309,15 +319,15 @@ describe('playbooks > list permissions', () => {
         cy.sudo();
         cy.dropSudo();
 
-        verifyRunIsVisible(runCond1); // this playbook is public, even though the channel is private
-        verifyRunIsVisible(runCond2); // this playbook and channel are both public
-        verifyRunIsNotVisible(runCond3); // this user is not a member of the playbook nor private channel
-        verifyRunIsNotVisible(runCond4); // this user is not a member of the playbook nor public channel
-        verifyRunIsNotVisible(runCond5); // this user is not a member of the playbook nor private channel
-        verifyRunIsNotVisible(runCond6); // this user it not a member of the playbook nor private channel
-        verifyRunIsNotVisible(runCond7); // this user is not a member of the playbook, despite the channel being public
-        verifyRunIsNotVisible(runCond8); // this user is not a member of team 2
-        verifyRunIsNotVisible(runCond9); // this uesr is not a member of team 2
+        verifyRunIsVisible(runs[0]); // this playbook is public, even though the channel is private
+        verifyRunIsVisible(runs[1]); // this playbook and channel are both public
+        verifyRunIsNotVisible(runs[2]); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runs[3]); // this user is not a member of the playbook nor public channel
+        verifyRunIsNotVisible(runs[4]); // this user is not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runs[5]); // this user it not a member of the playbook nor private channel
+        verifyRunIsNotVisible(runs[6]); // this user is not a member of the playbook, despite the channel being public
+        verifyRunIsNotVisible(runs[7]); // this user is not a member of team 2
+        verifyRunIsNotVisible(runs[8]); // this uesr is not a member of team 2
     });
 });
 
