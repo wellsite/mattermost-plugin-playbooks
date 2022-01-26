@@ -57,6 +57,8 @@ import {PlaybookPreviewTutorialSteps, TutorialTourCategories} from 'src/componen
 import TutorialTourTip from 'src/components/tutorial/tutorial_tour_tip';
 import PlaybookKeyMetrics from 'src/components/backstage/playbooks/metrics/playbook_key_metrics';
 
+import {Playbook, PlaybookQuery, PlaybookQueryHookResult, PlaybookQueryResult, usePlaybookQuery} from 'src/graphql/generated_types';
+
 interface MatchParams {
     playbookId: string
 }
@@ -104,15 +106,27 @@ const RedText = styled.div`
     color: var(--error-text);
 `;
 
+const usePlaybook = (id: string): [Exclude<PlaybookQuery['playbook'], null>, PlaybookQueryHookResult] => {
+    const result = usePlaybookQuery({
+        variables: {
+            id,
+        },
+        fetchPolicy: 'network-only',
+        nextFetchPolicy: 'cache-first',
+    });
+
+    let playbook = result.data?.playbook;
+    playbook = playbook === null ? undefined : playbook; //eslint-disable-line no-undefined
+
+    return [playbook, result];
+};
+
 /** @deprecated this page and potentially some inner sections will be deprecated in the future. See `playbook_editor/playbook_editor.tsx`. */
-const Playbook = () => {
+const PlaybookPage = () => {
     const dispatch = useDispatch();
     const {formatMessage} = useIntl();
     const match = useRouteMatch<MatchParams>();
-    const [playbook, setPlaybook] = useState<PlaybookWithChecklist>();
     const [followerIds, setFollowerIds] = useState<string[]>([]);
-    const [fetchingState, setFetchingState] = useState(FetchingStateType.loading);
-    const team = useSelector<GlobalState, Team>((state) => getTeam(state, playbook?.team_id || ''));
     const stats = useStats(match.params.playbookId);
     const [isFollowed, setIsFollowed] = useState(false);
     const currentUserId = useSelector(getCurrentUserId);
@@ -127,6 +141,9 @@ const Playbook = () => {
     const addToast = useToasts().add;
     const punchoutTitleRow = useMeasurePunchouts(['title-row'], [], {y: -5, height: 10, x: -5, width: 10});
     const showRunButtonTutorial = useShowTutorialStep(PlaybookPreviewTutorialSteps.RunButton, TutorialTourCategories.PLAYBOOK_PREVIEW);
+
+    const [playbook, {error, loading}] = usePlaybook(match.params.playbookId);
+    const team = useSelector<GlobalState, Team>((state) => getTeam(state, playbook?.team_id || ''));
 
     const changeFollowing = (check: boolean) => {
         if (playbook?.id) {
@@ -169,22 +186,6 @@ const Playbook = () => {
             const playbookId = match.params.playbookId;
             if (playbookId) {
                 try {
-                    const fetchedPlaybook = await clientFetchPlaybook(playbookId);
-                    setPlaybook(fetchedPlaybook!);
-                    setFetchingState(FetchingStateType.fetched);
-                } catch {
-                    setFetchingState(FetchingStateType.notFound);
-                }
-            }
-        };
-        fetchData();
-    }, [match.params.playbookId, currentUserId]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const playbookId = match.params.playbookId;
-            if (playbookId) {
-                try {
                     const fetchedFollowerIds = await clientFetchPlaybookFollowers(playbookId);
                     setFollowerIds(fetchedFollowerIds);
                     setIsFollowed(fetchedFollowerIds.includes(currentUserId));
@@ -196,12 +197,12 @@ const Playbook = () => {
         fetchData();
     }, [match.params.playbookId, currentUserId, isFollowed]);
 
-    if (fetchingState === FetchingStateType.loading) {
-        return null;
+    if (error) {
+        return <Redirect to={pluginErrorUrl(ErrorPageTypes.PLAYBOOKS)}/>;
     }
 
-    if (fetchingState === FetchingStateType.notFound || !playbook) {
-        return <Redirect to={pluginErrorUrl(ErrorPageTypes.PLAYBOOKS)}/>;
+    if (loading || !playbook) {
+        return null;
     }
 
     let accessIconClass;
@@ -409,23 +410,23 @@ const Playbook = () => {
                     <Redirect to={`${match.url}/preview`}/>
                 </Route>
                 <Route path={`${match.path}/preview`}>
-                    <PlaybookPreview
+                    {/*<PlaybookPreview
                         playbook={playbook}
                         followerIds={followerIds}
                         runsInProgress={stats.runs_in_progress}
-                    />
+                    />*/}
                 </Route>
                 <Route path={`${match.path}/usage`}>
                     <PlaybookUsage
-                        playbook={playbook}
+                        playbookID={playbook.id}
                         stats={stats}
                     />
                 </Route>
                 <Route path={`${match.path}/metrics`}>
-                    <PlaybookKeyMetrics
+                    {/*<PlaybookKeyMetrics
                         playbook={playbook}
                         stats={stats}
-                    />
+                    />*/}
                 </Route>
             </Switch>
             {modal}
@@ -553,4 +554,4 @@ const activeNavItemStyle = {
     boxShadow: 'inset 0px -2px 0px 0px var(--button-bg)',
 };
 
-export default Playbook;
+export default PlaybookPage;
