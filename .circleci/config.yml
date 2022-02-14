@@ -528,7 +528,7 @@ jobs:
     steps:
       - run-e2e-tests
 
-e2e-cypress-tests-starter:
+  e2e-cypress-tests-starter:
     resource_class: xlarge
     docker:
       - image: docker.io/mattermost/builder:go-1.16.5-node-16.4.0
