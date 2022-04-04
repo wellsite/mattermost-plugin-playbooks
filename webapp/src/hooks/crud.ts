@@ -36,6 +36,19 @@ export function usePlaybook(id: Playbook['id']) {
     }, [id]);
 
     return playbook;
+
+    /*const result = usePlaybookQuery({
+        variables: {
+            id,
+        },
+        fetchPolicy: 'network-only',
+        nextFetchPolicy: 'cache-first',
+    });
+
+    let playbook = result.data?.playbook;
+    playbook = playbook === null ? undefined : playbook; //eslint-disable-line no-undefined
+
+    return [playbook, result];*/
 }
 
 type EditPlaybookReturn = [PlaybookWithChecklist | undefined, (update: Partial<PlaybookWithChecklist>) => void]
