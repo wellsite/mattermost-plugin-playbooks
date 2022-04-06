@@ -6,9 +6,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-type rootResolver struct{}
+type RootResolver struct{}
 
-func (r *rootResolver) Playbook(ctx context.Context, args struct {
+func (r *RootResolver) Playbook(ctx context.Context, args struct {
 	Id string
 }) (*playbookResolver, error) {
 	c, err := getContext(ctx)
@@ -31,7 +31,7 @@ func (r *rootResolver) Playbook(ctx context.Context, args struct {
 	return &playbookResolver{playbook}, nil
 }
 
-func (r *rootResolver) UpdatePlaybook(ctx context.Context, args struct {
+func (r *RootResolver) UpdatePlaybook(ctx context.Context, args struct {
 	Id      string
 	Updates struct {
 		Title       *string
@@ -59,7 +59,7 @@ func (r *rootResolver) UpdatePlaybook(ctx context.Context, args struct {
 	return args.Id, nil
 }
 
-func (_ *rootResolver) Thing() *testResolver {
+func (_ *RootResolver) Thing() *testResolver {
 	return &testResolver{
 		Test{Thing: "thing", OtherThing: "otherthing"},
 	}

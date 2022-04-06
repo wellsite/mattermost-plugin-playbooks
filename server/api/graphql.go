@@ -29,7 +29,7 @@ type GraphQLHandler struct {
 }
 
 //go:embed schema.graphqls
-var schemaFile string
+var SchemaFile string
 
 func NewGraphQLHandler(
 	router *mux.Router,
@@ -62,11 +62,11 @@ func NewGraphQLHandler(
 		)
 	}
 
-	root := &rootResolver{}
+	root := &RootResolver{}
 	var err error
-	handler.schema, err = graphql.ParseSchema(schemaFile, root, opts...)
+	handler.schema, err = graphql.ParseSchema(SchemaFile, root, opts...)
 	if err != nil {
-		log.Errorf("unable to parse graphql schema: %w", err)
+		log.Errorf("unable to parse graphql schema: %v", err.Error())
 		return nil
 	}
 
