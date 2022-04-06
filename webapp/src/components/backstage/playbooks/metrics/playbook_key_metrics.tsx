@@ -4,7 +4,6 @@
 import React, {useEffect} from 'react';
 import styled from 'styled-components';
 
-import {PlaybookWithChecklist} from 'src/types/playbook';
 import {PlaybookStats} from 'src/types/stats';
 import {useAllowPlaybookAndRunMetrics, useRunsList} from 'src/hooks';
 import UpgradeKeyMetricsPlaceholder from 'src/components/backstage/playbooks/metrics/upgrade_key_metrics_placeholder';
@@ -13,6 +12,7 @@ import {BACKSTAGE_LIST_PER_PAGE} from 'src/constants';
 import {PlaybookRunStatus} from 'src/types/playbook_run';
 import MetricsRunList from 'src/components/backstage/playbooks/metrics/metrics_run_list';
 import NoMetricsPlaceholder from 'src/components/backstage/playbooks/metrics/no_metrics_placeholder';
+import {FullPlaybook} from 'src/graphql/hooks';
 
 const defaultPlaybookFetchParams = {
     page: 0,
@@ -23,7 +23,7 @@ const defaultPlaybookFetchParams = {
 };
 
 interface Props {
-    playbook: PlaybookWithChecklist;
+    playbook: Exclude<FullPlaybook, null | undefined>;
     stats: PlaybookStats;
 }
 

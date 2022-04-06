@@ -50,6 +50,7 @@ import useConfirmPlaybookArchiveModal from '../archive_playbook_modal';
 import {useMeasurePunchouts, useShowTutorialStep} from 'src/components/tutorial/tutorial_tour_tip/hooks';
 import {PlaybookPreviewTutorialSteps, TutorialTourCategories} from 'src/components/tutorial/tours';
 import TutorialTourTip from 'src/components/tutorial/tutorial_tour_tip';
+import {FullPlaybook} from 'src/graphql/hooks';
 
 const LEARN_PLAYBOOKS_TITLE = 'Learn how to use playbooks';
 
@@ -89,7 +90,7 @@ const RedText = styled.div`
 `;
 
 type Props = {
-    playbook: PlaybookWithChecklist;
+    playbook: FullPlaybook;
     isFollowing: boolean;
     onFollowingChange: (following: boolean) => void;
 }
@@ -148,6 +149,10 @@ const TitleBar = ({
             navigateToUrl(`/${team.name || ''}/_playbooks/${playbook?.id || ''}/run`);
         }
     };
+
+    if (!playbook) {
+        return null;
+    }
 
     let accessIconClass;
     if (playbook.public) {

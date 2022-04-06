@@ -6,11 +6,12 @@ import styled from 'styled-components';
 
 import MetricsCard from 'src/components/backstage/playbooks/metrics/metrics_card';
 import {PlaybookStats} from 'src/types/stats';
-import {Metric, MetricType, PlaybookWithChecklist} from 'src/types/playbook';
+import {Metric, MetricType} from 'src/types/playbook';
 import {ClockOutline, DollarSign, PoundSign} from 'src/components/backstage/playbook_edit/styles';
+import {FullPlaybook} from 'src/graphql/hooks';
 
 interface Props {
-    playbook: PlaybookWithChecklist;
+    playbook: FullPlaybook;
     stats: PlaybookStats;
 }
 

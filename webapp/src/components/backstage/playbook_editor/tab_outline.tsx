@@ -4,8 +4,6 @@
 import styled from 'styled-components';
 import React from 'react';
 
-import {PlaybookWithChecklist} from 'src/types/playbook';
-
 import renderActions from 'src/components/backstage/playbooks/playbook_preview_actions';
 import renderChecklists from 'src/components/backstage/playbooks/playbook_preview_checklists';
 import renderDescription from 'src/components/backstage/playbooks/playbook_preview_description';
@@ -13,10 +11,12 @@ import renderRetrospective from 'src/components/backstage/playbooks/playbook_pre
 import renderStatusUpdates from 'src/components/backstage/playbooks/playbook_preview_status_updates';
 import {HorizontalBG} from 'src/components/collapsible_checklist';
 
+import {FullPlaybook} from 'src/graphql/hooks';
+
 import Navbar, {SectionID} from './tab_outline_navbar';
 
 interface Props {
-    playbook: PlaybookWithChecklist;
+    playbook: FullPlaybook;
     runsInProgress: number;
     followerIds: string[];
 }

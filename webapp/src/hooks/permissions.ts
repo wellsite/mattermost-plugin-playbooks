@@ -11,8 +11,6 @@ import {useDispatch, useSelector} from 'react-redux';
 
 import {makeGeneralPermissionSpecific, PlaybookPermissionGeneral} from 'src/types/permissions';
 
-import {Playbook, PlaybookMember} from 'src/types/playbook';
-
 import {usePlaybook} from './crud';
 
 export const useHasSystemPermission = (permission: string) => {
@@ -44,7 +42,7 @@ export interface PlaybookPermissionsParams {
     members: PlaybookPermissionsMember[]
 }
 
-export const useHasPlaybookPermission = (permission: PlaybookPermissionGeneral, playbook: Maybe<Playbook>) => {
+export const useHasPlaybookPermission = (permission: PlaybookPermissionGeneral, playbook: Maybe<PlaybookPermissionsParams>) => {
     const dispatch = useDispatch();
     const currentUserId = useSelector(getCurrentUserId);
     const roles = useSelector(getRoles);

@@ -7,8 +7,20 @@ query Playbook($id: String!) {
 		public
 		delete_at: deleteAt
 		default_playbook_member_role: defaultPlaybookMemberRole
+		invited_user_ids: invitedUserIDs
+		broadcast_channel_ids: broadcastChannelIDs
+		webhook_on_creation_urls: webhookOnCreationURLs
 		checklists {
+			id
 			title
+			items {
+				id
+				title
+				description
+				state
+				assigneeID
+				command
+			}
         }
 		members {
 			user_id: userID

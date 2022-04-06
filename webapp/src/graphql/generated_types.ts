@@ -51,17 +51,30 @@ export type MutationUpdatePlaybookArgs = {
 
 export type Playbook = {
     __typename?: 'Playbook';
+    broadcastChannelIDs: Array<Scalars['String']>;
     checklists: Array<Checklist>;
     createPublicPlaybookRun: Scalars['Boolean'];
     defaultPlaybookMemberRole: Scalars['String'];
     deleteAt: Scalars['Float'];
     description: Scalars['String'];
     id: Scalars['String'];
+    invitedUserIDs: Array<Scalars['String']>;
     members: Array<Member>;
+    metrics: Array<PlaybookMetricConfig>;
     public: Scalars['Boolean'];
     runSummaryTemplateEnabled: Scalars['Boolean'];
     teamID: Scalars['String'];
     title: Scalars['String'];
+    webhookOnCreationURLs: Array<Scalars['String']>;
+};
+
+export type PlaybookMetricConfig = {
+    __typename?: 'PlaybookMetricConfig';
+    description: Scalars['String'];
+    id: Scalars['String'];
+    target?: Maybe<Scalars['Int']>;
+    title: Scalars['String'];
+    type: Scalars['String'];
 };
 
 export type PlaybookUpdates = {
@@ -82,7 +95,7 @@ export type PlaybookQueryVariables = Exact<{
     id: Scalars['String'];
 }>;
 
-export type PlaybookQuery = { __typename?: 'Query', playbook?: { __typename?: 'Playbook', id: string, title: string, description: string, public: boolean, team_id: string, delete_at: number, default_playbook_member_role: string, checklists: Array<{ __typename?: 'Checklist', title: string }>, members: Array<{ __typename?: 'Member', roles: Array<string>, user_id: string }> } | null };
+export type PlaybookQuery = { __typename?: 'Query', playbook?: { __typename?: 'Playbook', id: string, title: string, description: string, public: boolean, team_id: string, delete_at: number, default_playbook_member_role: string, invited_user_ids: Array<string>, broadcast_channel_ids: Array<string>, webhook_on_creation_urls: Array<string>, checklists: Array<{ __typename?: 'Checklist', id: string, title: string, items: Array<{ __typename?: 'ChecklistItem', id: string, title: string, description: string, state: string, assigneeID: string, command: string }> }>, members: Array<{ __typename?: 'Member', roles: Array<string>, user_id: string }> } | null };
 
 export const PlaybookDocument = gql`
     query Playbook($id: String!) {
@@ -94,8 +107,20 @@ export const PlaybookDocument = gql`
     public
     delete_at: deleteAt
     default_playbook_member_role: defaultPlaybookMemberRole
+    invited_user_ids: invitedUserIDs
+    broadcast_channel_ids: broadcastChannelIDs
+    webhook_on_creation_urls: webhookOnCreationURLs
     checklists {
+      id
       title
+      items {
+        id
+        title
+        description
+        state
+        assigneeID
+        command
+      }
     }
     members {
       user_id: userID

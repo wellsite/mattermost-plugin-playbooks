@@ -14,7 +14,6 @@ import {pluginErrorUrl} from 'src/browser_routing';
 import {
     useForceDocumentTitle,
     useStats,
-    usePlaybook,
 } from 'src/hooks';
 
 import {
@@ -25,6 +24,8 @@ import {ErrorPageTypes} from 'src/constants';
 
 import PlaybookUsage from 'src/components/backstage/playbooks/playbook_usage';
 import PlaybookKeyMetrics from 'src/components/backstage/playbooks/metrics/playbook_key_metrics';
+
+import {usePlaybook} from 'src/graphql/hooks';
 
 import TitleBar from './title_bar';
 import Outline from './tab_outline';
@@ -60,7 +61,7 @@ const PlaybookEditor = () => {
     const {formatMessage} = useIntl();
     const {url, path, params: {playbookId}} = useRouteMatch<MatchParams>();
 
-    const playbook = usePlaybook(playbookId);
+    const [playbook, {error, loading}] = usePlaybook(playbookId);
     const stats = useStats(playbookId);
     const {
         followerIds,
@@ -70,14 +71,14 @@ const PlaybookEditor = () => {
 
     useForceDocumentTitle(playbook?.title ? (playbook.title + ' - Playbooks') : 'Playbooks');
 
-    if (playbook === undefined) {
-        // loading
-        return null;
-    }
-
-    if (playbook === null) {
+    if (error) {
         // not found
         return <Redirect to={pluginErrorUrl(ErrorPageTypes.PLAYBOOKS)}/>;
+    }
+
+    if (loading || !playbook) {
+        // loading
+        return null;
     }
 
     return (
@@ -123,7 +124,7 @@ const PlaybookEditor = () => {
                     </Route>
                     <Route path={`${path}/usage`}>
                         <PlaybookUsage
-                            playbook={playbook}
+                            playbookID={playbook.id}
                             stats={stats}
                         />
                     </Route>
