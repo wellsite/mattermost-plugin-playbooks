@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/mattermost/mattermost-plugin-playbooks/server/app"
 )
 
@@ -25,10 +27,10 @@ type metricConfigResolver struct {
 	app.PlaybookMetricConfig
 }
 
-func (r *metricConfigResolver) Target() *float64 {
+func (r *metricConfigResolver) Target() *int32 {
 	if r.PlaybookMetricConfig.Target.Valid {
-		floatValue := float64(r.PlaybookMetricConfig.Target.ValueOrZero())
-		return &floatValue
+		intvalue := int32(r.PlaybookMetricConfig.Target.ValueOrZero())
+		return &intvalue
 	} else {
 		return nil
 	}
