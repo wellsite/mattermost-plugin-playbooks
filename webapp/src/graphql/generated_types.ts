@@ -49,23 +49,46 @@ export type MutationUpdatePlaybookArgs = {
     updates: PlaybookUpdates;
 };
 
+export type NewMember = {
+    roles: Array<Scalars['String']>;
+    userID: Scalars['String'];
+};
+
 export type Playbook = {
     __typename?: 'Playbook';
     broadcastChannelIDs: Array<Scalars['String']>;
+    broadcastEnabled: Scalars['Boolean'];
+    categorizeChannelEnabled: Scalars['Boolean'];
+    categoryName: Scalars['String'];
+    channelNameTemplate: Scalars['String'];
     checklists: Array<Checklist>;
     createPublicPlaybookRun: Scalars['Boolean'];
+    defaultOwnerEnabled: Scalars['Boolean'];
+    defaultOwnerID: Scalars['String'];
+    defaultPlaybookAdminRole: Scalars['String'];
     defaultPlaybookMemberRole: Scalars['String'];
+    defaultRunAdminRole: Scalars['String'];
+    defaultRunMemberRole: Scalars['String'];
     deleteAt: Scalars['Float'];
     description: Scalars['String'];
     id: Scalars['String'];
+    invitedGroupIDs: Array<Scalars['String']>;
     invitedUserIDs: Array<Scalars['String']>;
     members: Array<Member>;
     metrics: Array<PlaybookMetricConfig>;
     public: Scalars['Boolean'];
+    retrospectiveEnabled: Scalars['Boolean'];
+    retrospectiveReminderIntervalSeconds: Scalars['Float'];
+    retrospectiveTemplate: Scalars['String'];
+    runSummaryTemplate: Scalars['String'];
     runSummaryTemplateEnabled: Scalars['Boolean'];
+    signalAnyKeywords: Array<Scalars['String']>;
+    signalAnyKeywordsEnabled: Scalars['Boolean'];
     teamID: Scalars['String'];
     title: Scalars['String'];
     webhookOnCreationURLs: Array<Scalars['String']>;
+    webhookOnStatusUpdateEnabled: Scalars['Boolean'];
+    webhookOnStatusUpdateURLs: Array<Scalars['String']>;
 };
 
 export type PlaybookMetricConfig = {
@@ -78,8 +101,31 @@ export type PlaybookMetricConfig = {
 };
 
 export type PlaybookUpdates = {
+    broadcastChannelIDs?: InputMaybe<Array<Scalars['String']>>;
+    broadcastEnabled?: InputMaybe<Scalars['Boolean']>;
+    categorizeChannelEnabled?: InputMaybe<Scalars['Boolean']>;
+    categoryName?: InputMaybe<Scalars['String']>;
+    channelNameTemplate?: InputMaybe<Scalars['String']>;
+    createPublicPlaybookRun?: InputMaybe<Scalars['Boolean']>;
+    defaultOwnerEnabled?: InputMaybe<Scalars['Boolean']>;
+    defaultOwnerID?: InputMaybe<Scalars['String']>;
     description?: InputMaybe<Scalars['String']>;
+    inviteUsersEnabled?: InputMaybe<Scalars['Boolean']>;
+    invitedGroupIDs?: InputMaybe<Array<Scalars['String']>>;
+    invitedUserIDs?: InputMaybe<Array<Scalars['String']>>;
+    public?: InputMaybe<Scalars['Boolean']>;
+    retrospectiveEnabled?: InputMaybe<Scalars['Boolean']>;
+    retrospectiveReminderIntervalSeconds?: InputMaybe<Scalars['Float']>;
+    retrospectiveTemplate?: InputMaybe<Scalars['String']>;
+    runSummaryTemplate?: InputMaybe<Scalars['String']>;
+    runSummaryTemplateEnabled?: InputMaybe<Scalars['Boolean']>;
+    signalAnyKeywords?: InputMaybe<Array<Scalars['String']>>;
+    signalAnyKeywordsEnabled?: InputMaybe<Scalars['Boolean']>;
     title?: InputMaybe<Scalars['String']>;
+    webhookOnCreationEnabled?: InputMaybe<Scalars['Boolean']>;
+    webhookOnCreationURLs?: InputMaybe<Array<Scalars['String']>>;
+    webhookOnStatusUpdateEnabled?: InputMaybe<Scalars['Boolean']>;
+    webhookOnStatusUpdateURLs?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type Query = {

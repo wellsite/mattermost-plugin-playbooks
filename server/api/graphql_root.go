@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -34,8 +35,31 @@ func (r *RootResolver) Playbook(ctx context.Context, args struct {
 func (r *RootResolver) UpdatePlaybook(ctx context.Context, args struct {
 	Id      string
 	Updates struct {
-		Title       *string
-		Description *string
+		Title                                *string
+		Description                          *string
+		Public                               *bool
+		CreatePublicPlaybookRun              *bool
+		InvitedUserIDs                       *[]string
+		InvitedGroupIDs                      *[]string
+		InviteUsersEnabled                   *bool
+		DefaultOwnerID                       *string
+		DefaultOwnerEnabled                  *bool
+		BroadcastChannelIDs                  *[]string
+		BroadcastEnabled                     *bool
+		WebhookOnCreationURLs                *[]string
+		WebhookOnCreationEnabled             *bool
+		RetrospectiveReminderIntervalSeconds *float64
+		RetrospectiveTemplate                *string
+		RetrospectiveEnabled                 *bool
+		WebhookOnStatusUpdateURLs            *[]string
+		WebhookOnStatusUpdateEnabled         *bool
+		SignalAnyKeywords                    *[]string
+		SignalAnyKeywordsEnabled             *bool
+		CategorizeChannelEnabled             *bool
+		CategoryName                         *string
+		RunSummaryTemplateEnabled            *bool
+		RunSummaryTemplate                   *string
+		ChannelNameTemplate                  *string
 	}
 }) (string, error) {
 	c, err := getContext(ctx)
@@ -43,12 +67,11 @@ func (r *RootResolver) UpdatePlaybook(ctx context.Context, args struct {
 		return "", err
 	}
 	setmap := map[string]interface{}{}
-	if args.Updates.Title != nil {
-		setmap["Title"] = *args.Updates.Title
-	}
-	if args.Updates.Description != nil {
-		setmap["Description"] = *args.Updates.Description
-	}
+	addToSetmap(setmap, "Title", args.Updates.Title)
+	addToSetmap(setmap, "Description", args.Updates.Description)
+	addToSetmap(setmap, "Public", args.Updates.Public)
+	addToSetmap(setmap, "CreatePublicPlaybookRun", args.Updates.CreatePublicPlaybookRun)
+	addConcatToSetmap(setmap, "ConcatenatedInvitedUserIDs", args.Updates.InvitedUserIDs)
 
 	if len(setmap) > 0 {
 		if err := c.playbookStore.GraphqlUpdate(args.Id, setmap); err != nil {
@@ -57,6 +80,18 @@ func (r *RootResolver) UpdatePlaybook(ctx context.Context, args struct {
 	}
 
 	return args.Id, nil
+}
+
+func addToSetmap[T any](setmap map[string]interface{}, name string, value *T) {
+	if value != nil {
+		setmap[name] = *value
+	}
+}
+
+func addConcatToSetmap(setmap map[string]interface{}, name string, value *[]string) {
+	if value != nil {
+		setmap[name] = strings.Join(*value, ",")
+	}
 }
 
 func (_ *RootResolver) Thing() *testResolver {

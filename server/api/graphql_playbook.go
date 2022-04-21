@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/mattermost/mattermost-plugin-playbooks/server/app"
 )
 
@@ -12,6 +10,10 @@ type playbookResolver struct {
 
 func (r *playbookResolver) DeleteAt() float64 {
 	return float64(r.Playbook.DeleteAt)
+}
+
+func (r *playbookResolver) RetrospectiveReminderIntervalSeconds() float64 {
+	return float64(r.Playbook.RetrospectiveReminderIntervalSeconds)
 }
 
 func (r *playbookResolver) Metrics() []*metricConfigResolver {

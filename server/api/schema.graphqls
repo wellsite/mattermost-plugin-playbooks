@@ -4,11 +4,40 @@ type Query {
 
 type Mutation {
 	updatePlaybook(id: String!, updates: PlaybookUpdates!): String!
+	#addPlaybookMember(id: String!, newMember: NewMember): String
 }
 
 input PlaybookUpdates {
 	title: String
 	description: String
+	public: Boolean
+	createPublicPlaybookRun: Boolean
+	invitedUserIDs: [String!]
+	invitedGroupIDs: [String!]
+	inviteUsersEnabled: Boolean
+	defaultOwnerID: String
+	defaultOwnerEnabled: Boolean
+	broadcastChannelIDs: [String!]
+	broadcastEnabled: Boolean
+	webhookOnCreationURLs: [String!]
+	webhookOnCreationEnabled: Boolean
+	retrospectiveReminderIntervalSeconds: Float
+	retrospectiveTemplate: String
+	retrospectiveEnabled: Boolean
+	webhookOnStatusUpdateURLs: [String!]
+	webhookOnStatusUpdateEnabled: Boolean
+	signalAnyKeywords: [String!]
+	signalAnyKeywordsEnabled: Boolean
+	categorizeChannelEnabled: Boolean
+	categoryName: String
+	runSummaryTemplateEnabled: Boolean
+	runSummaryTemplate: String
+	channelNameTemplate: String
+}
+
+input NewMember {
+	userID: String!
+	roles:  [String!]!
 }
 
 type Playbook {
@@ -24,8 +53,28 @@ type Playbook {
 	checklists: [Checklist!]!
 	members: [Member!]!
 	invitedUserIDs: [String!]!
+	invitedGroupIDs: [String!]!
+	defaultOwnerID: String!
+	defaultOwnerEnabled: Boolean!
 	broadcastChannelIDs: [String!]!
+	broadcastEnabled: Boolean!
 	webhookOnCreationURLs: [String!]!
+	retrospectiveReminderIntervalSeconds: Float!
+	retrospectiveTemplate: String!
+	retrospectiveEnabled: Boolean!
+	webhookOnStatusUpdateURLs: [String!]!
+	webhookOnStatusUpdateEnabled: Boolean!
+	signalAnyKeywords: [String!]!
+	signalAnyKeywordsEnabled: Boolean!
+	categorizeChannelEnabled: Boolean!
+	categoryName: String!
+	runSummaryTemplateEnabled: Boolean!
+	runSummaryTemplate: String!
+	channelNameTemplate: String!
+	defaultPlaybookAdminRole: String!
+	defaultPlaybookMemberRole: String!
+	defaultRunAdminRole: String!
+	defaultRunMemberRole: String!
 	metrics: [PlaybookMetricConfig!]!
 }
 
