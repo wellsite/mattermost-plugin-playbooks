@@ -16,7 +16,7 @@
         }
     },
     "webapp": {
-        "bundle_path": "webapp/dist/main.js"
+        "bundle_path": "webapp/dist/remote_entry.js"
     },
     "settings_schema": {
         "header": "",

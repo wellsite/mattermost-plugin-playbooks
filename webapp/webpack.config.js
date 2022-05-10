@@ -2,6 +2,8 @@ const exec = require('child_process').exec;
 
 const path = require('path');
 
+const {ModuleFederationPlugin} = require('webpack').container;
+
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
 const PLUGIN_ID = require('../plugin.json').id;
@@ -15,7 +17,45 @@ if (NPM_TARGET === 'debug' || NPM_TARGET === 'debug:watch' || targetIsDevServer)
     devtool = 'eval-cheap-module-source-map';
 }
 
-const plugins = [];
+const plugins = [
+    new ModuleFederationPlugin({
+        name: PLUGIN_ID,
+        filename: 'remote_entry.js',
+
+        // library: {
+        //     type: 'var',
+        //     name: PLUGIN_ID,
+        // },
+        // library: { type: 'var', name: 'faaa' },
+        exposes: {
+            plugin: './src/index',
+        },
+        shared: {
+            luxon: {
+                singleton: true,
+            },
+            react: {
+                singleton: true,
+            },
+            'react-bootstrap': {
+                singleton: true,
+            },
+            'react-dom': {
+                singleton: true,
+            },
+            'react-intl': {
+                singleton: true,
+            },
+            'react-redux': {
+                singleton: true,
+            },
+            'react-router-dom': {
+                singleton: true,
+            },
+        },
+    }),
+];
+
 if (NPM_TARGET === 'build:watch' || NPM_TARGET === 'debug:watch') {
     plugins.push({
         apply: (compiler) => {
@@ -43,7 +83,7 @@ if (targetIsDevServer) {
 
 let config = {
     entry: [
-        './src/index.tsx',
+        './src/remote_entry.ts',
     ],
     resolve: {
         alias: {
@@ -116,21 +156,22 @@ let config = {
         ],
     },
     externals: {
-        react: 'React',
-        redux: 'Redux',
-        luxon: 'Luxon',
-        'react-redux': 'ReactRedux',
-        'prop-types': 'PropTypes',
-        'react-bootstrap': 'ReactBootstrap',
-        'react-router-dom': 'ReactRouterDom',
-        'react-intl': 'ReactIntl',
+
+        // react: 'React',
+        // redux: 'Redux',
+        // luxon: 'Luxon',
+        // 'react-redux': 'ReactRedux',
+        // 'react-bootstrap': 'ReactBootstrap',
+        // 'react-router-dom': 'ReactRouterDom',
+        // 'react-intl': 'ReactIntl',
     },
-    output: {
-        devtoolNamespace: PLUGIN_ID,
-        path: path.join(__dirname, '/dist'),
-        publicPath: '/',
-        filename: 'main.js',
-    },
+
+    // output: {
+    //     devtoolNamespace: PLUGIN_ID,
+    //     path: path.join(__dirname, '/dist'),
+    //     publicPath: `/static/plugins/${PLUGIN_ID}/`,
+    //     filename: 'main.js',
+    // },
     devtool,
     mode,
     plugins,

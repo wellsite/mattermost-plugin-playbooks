@@ -170,31 +170,40 @@ export default class Plugin {
     }
 
     public initialize(registry: PluginRegistry, store: Store<GlobalState>): void {
+        console.log('FEDS playbooks initialize 1');
         this.doRegistrations(registry, store);
+        console.log('FEDS playbooks initialize 2');
         this.stylesContainer = document.createElement('div');
         document.body.appendChild(this.stylesContainer);
-        render(<><GlobalSelectStyle/></>, this.stylesContainer);
+        console.log('FEDS playbooks initialize 3');
+        // render(<><GlobalSelectStyle/></>, this.stylesContainer);
+        console.log('FEDS playbooks initialize 4');
 
         // Consume the SiteURL so that the client is subpath aware. We also do this for Client4
         // in our version of the mattermost-redux, since webapp only does it in its copy.
         const siteUrl = getConfig(store.getState())?.SiteURL || '';
         setSiteUrl(siteUrl);
         Client4.setUrl(siteUrl);
+        console.log('FEDS playbooks initialize 5');
 
         // Grab global settings
         const getGlobalSettings = async () => {
             store.dispatch(actionSetGlobalSettings(await fetchGlobalSettings()));
         };
         getGlobalSettings();
+        console.log('FEDS playbooks initialize 6');
 
         // Grab roles
         //@ts-ignore
         store.dispatch(loadRolesIfNeeded([PlaybookRole.Member, PlaybookRole.Admin]));
+        console.log('FEDS playbooks initialize 7');
 
         this.userActivityWatch();
+        console.log('FEDS playbooks initialize 8');
 
         // Listen for channel changes and open the RHS when appropriate.
         this.removeRHSListener = store.subscribe(makeRHSOpener(store));
+        console.log('FEDS playbooks initialize 9');
     }
 
     public uninitialize() {
@@ -214,3 +223,5 @@ export default class Plugin {
 
 // @ts-ignore
 window.registerPlugin(pluginId, new Plugin());
+
+console.log('FEDS playbook index');
