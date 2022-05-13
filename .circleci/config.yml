@@ -92,7 +92,6 @@ commands:
     description: "Run the e2e tests with a server"
     steps:
       - setup_remote_docker
-      - checkout
       - attach_workspace:
           at: dist
       - run:
