@@ -145,11 +145,6 @@ dist:	apply server webapp bundle
 deploy: dist
 	./build/bin/pluginctl deploy $(PLUGIN_ID) dist/$(BUNDLE_NAME)
 
-## Installs the plugin to a server.
-.PHONY: justdeploy
-justdeploy:
-	./build/bin/pluginctl deploy $(PLUGIN_ID) dist/$(BUNDLE_NAME)
-
 ## Builds and installs the plugin to a server, updating the webapp automatically when changed.
 .PHONY: watch
 watch: apply server bundle
