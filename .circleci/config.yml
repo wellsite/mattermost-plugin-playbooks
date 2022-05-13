@@ -492,11 +492,11 @@ workflows:
       - test-MariaDB10-Postgres12
       - test-MySQL8-Postgres14
       - e2e-cypress-tests-cloud:
-        requires:
-          - build
+          requires:
+            - build
       - e2e-cypress-tests-master:
-        requires:
-          - build
+          requires:
+            - build
       - build:
           context: mattermost-plugin-incident-response-production
           filters:
