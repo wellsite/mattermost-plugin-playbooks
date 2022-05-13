@@ -106,7 +106,6 @@ commands:
           name: Wait for Elasticsearch
           command: |
             until curl --max-time 5 --output - localhost:9200; do echo waiting for Elasticsearch; sleep 5; done;
-      - checkout
       - run:
           name: Set and restore Postgres DB
           command: |
@@ -492,8 +491,12 @@ workflows:
       - test-MySQL8-Postgres11
       - test-MariaDB10-Postgres12
       - test-MySQL8-Postgres14
-      - e2e-cypress-tests-cloud
-      - e2e-cypress-tests-master
+      - e2e-cypress-tests-cloud:
+        requires:
+          - build
+      - e2e-cypress-tests-master:
+        requires:
+          - build
       - build:
           context: mattermost-plugin-incident-response-production
           filters:
