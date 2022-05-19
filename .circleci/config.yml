@@ -17,17 +17,6 @@ aliases:
       key: go-mod-v2-{{ checksum "go.sum" }}
       paths:
         - /go/pkg/mod
-  - &restore_cypress_cache
-    restore_cache:
-      key: v2-deploy-go-{{ checksum "go.sum" }}-npm-{{ checksum "./webapp/package-lock.json" }}-test-npm-{{ checksum "./tests-e2e/package-lock.json" }}
-  - &save_cypress_cache
-    save_cache:
-      key: v2-deploy-go-{{ checksum "go.sum" }}-npm-{{ checksum "./webapp/package-lock.json" }}-test-npm-{{ checksum "./tests-e2e/package-lock.json" }}
-      paths:
-        - /go/pkg/mod
-        - ./webapp/node_modules
-        - ./tests-e2e/node_modules
-        - /home/circleci/.cache
 
 commands:
   npm-dependencies:
@@ -47,107 +36,19 @@ commands:
           paths:
             - ./webapp/node_modules
 
-  deploy:
+  save:
+    description: "Save binaries artifacts"
     parameters:
-      bucket:
-        type: string
       filename:
         type: string
     steps:
-      - aws-s3/copy:
-          from: << parameters.filename >>
-          to: << parameters.bucket >>
-          arguments: '--acl public-read --cache-control no-cache'
-
-  test-with-db:
-    description: "Run tests with database"
-    steps:
       - run:
-          name: Waiting for databases to be ready
+          name: Copying artifacts
           command: |
-            for i in `seq 1 20`;
-            do
-              nc -z localhost 5432 && nc -z 127.0.0.1 3306 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for databases && exit 1
-      - checkout
-      - npm-dependencies
-      - *restore_go_cache
-      - run:
-          name: Testing
-          command: |
-            make test-ci
-      - *save_go_cache
-      - run:
-          when: always
-          command: |
-            mkdir -p server/test-results
-            cp report.xml server/test-results
-      - store_test_results:
-          path: server/test-results/
-
-  run-e2e-tests:
-    description: "Run the e2e tests with a server"
-    steps:
-      - setup_remote_docker
-      - run:
-          name: Disable ALSA
-          command: |
-            printf "pcm.!default {\n    type plug\n    slave.pcm \"null\"\n}\n" > ~/.asoundrc;
-      - run:
-          name: Wait for Inbucket
-          command: |
-            until curl --max-time 5 --output - localhost:10080; do echo waiting for Inbucket; sleep 5; done;
-      - run:
-          name: Wait for Elasticsearch
-          command: |
-            until curl --max-time 5 --output - localhost:9200; do echo waiting for Elasticsearch; sleep 5; done;
-      - checkout
-      - run:
-          name: Set and restore Postgres DB
-          command: |
-            whoami
-            sudo apt-get update
-            sudo apt-get install libxss1
-            sudo apt-get install postgresql-client
-            psql -d $TEST_DATABASE_URL -v "ON_ERROR_STOP=1" -c "CREATE DATABASE migrated;"
-            psql -d $TEST_DATABASE_URL -v "ON_ERROR_STOP=1" -c "CREATE DATABASE latest;"
-            psql -d $TEST_DATABASE_URL -v "ON_ERROR_STOP=1" mattermost_test < tests-e2e/db-setup/mattermost.sql
-      - run:
-          name: Upload license
-          command: |
-            TOKEN=`curl -i -d '{"login_id":"'${MM_ADMIN_USERNAME}'","password":"'${MM_ADMIN_PASSWORD}'"}' $MM_SERVICESETTINGS_SITEURL/api/v4/users/login | grep Token | cut -d' ' -f2`
-            TOKEN=${TOKEN//$'\r'/}
-            STATUSCODE=$(curl --retry 3 -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"trialreceive_emails_accepted": true, "terms_accepted": true, "users": 100}' $MM_SERVICESETTINGS_SITEURL/api/v4/trial-license -w "%{http_code}" -o /dev/stderr)
-            if test $STATUSCODE -ne 200; then exit 1; fi
-      - *restore_cypress_cache
-      - run:
-          name: Getting Cypress & JavaScript dependencies
-          command: |
-            sudo apt-get install libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-            cd webapp
-            NODE_ENV=development npm install --ignore-scripts --no-save
-            cd ../tests-e2e
-            NODE_ENV=development npm install --ignore-scripts --no-save
-            npx cypress install
-      - run:
-          name: Install Playbooks
-          command: |
-            make deploy CGO_ENABLED=0
-      - run:
-          name: Run Cypress Tests
-          no_output_timeout: 30m
-          command: |
-            cd tests-e2e
-            circleci tests glob "cypress/integration/**/*.js" | circleci tests split --split-by=timings > ./tests-to-run
-            npm run test -- --spec "$(cat ./tests-to-run | tr '\n' ',')"
-      - *save_cypress_cache
-      - store_test_results:
-          path: tests-e2e/cypress/results/junit
+            mkdir -p /tmp/artifacts
+            cp dist/<<parameters.filename>> /tmp/artifacts
       - store_artifacts:
-          path: tests-e2e/cypress/videos
+          path: /tmp/artifacts
 
 jobs:
   lint:
@@ -177,10 +78,6 @@ jobs:
           name: Checking diff of webapp i18n files
           command: |
             git --no-pager diff --exit-code webapp/i18n/en.json || (echo "Please run \"make i18n-extract\" and commit the changes in webapp/i18n/en.json." && exit 1)
-      # - run:
-      #     name: Checking diff of server i18n files
-      #     command: |
-      #       make i18n-check || (echo "Please run \"make i18n-extract\", add messages to any empty translations, and commit the changes in server/i18n/en.json." && exit 1)
 
       - *save_go_cache
 
@@ -198,320 +95,45 @@ jobs:
           name: Building Plugin Bundle
           command: |
             make dist
-      - run:
-          name: Generating Release Notes
-          command: |
-            printf "Supported Mattermost Server Versions: **$(cat plugin.json | jq .min_server_version -r)+** \n## Enhancements\n\n## Fixes\n"  >> dist/release-notes.md
-            if [[ $(git tag -l | wc -l) -eq 1 ]]; then
-              git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git rev-list --max-parents=0 HEAD) HEAD >> dist/release-notes.md
-            else
-              git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git describe --tags --abbrev=0 $(git describe --tags --abbrev=0)^)..HEAD >> dist/release-notes.md
-            fi
+      - save:
+          filename: "*.tar.gz"
       - persist_to_workspace:
-          root: dist
+          root: /tmp/artifacts
           paths:
-            - "*.tar.gz"
-            - "release-notes.md"
-      - store_artifacts:
-          path: dist
+             - .
 
-  deploy-ci:
-    docker:
-      - image: cimg/python:2.7
-    steps:
-      - attach_workspace:
-          at: dist
-      - run: 'mv dist/*.tar.gz dist/$CIRCLE_PROJECT_REPONAME-ci.tar.gz'
-      - deploy:
-          filename: "dist/*.tar.gz"
-          bucket: "s3://mattermost-plugins-ci/ci/"
-
-  deploy-release:
-    docker:
-      - image: cimg/python:2.7
-    steps:
-      - attach_workspace:
-          at: dist
-      - run: 'mv dist/*.tar.gz dist/$CIRCLE_PROJECT_REPONAME-latest.tar.gz'
-      - run: 'cp dist/$CIRCLE_PROJECT_REPONAME-latest.tar.gz dist/$CIRCLE_PROJECT_REPONAME-$CIRCLE_TAG.tar.gz'
-      - deploy:
-          filename: "dist/$CIRCLE_PROJECT_REPONAME-latest.tar.gz"
-          bucket: "s3://mattermost-plugins-ci/release/"
-      - deploy:
-          filename: "dist/$CIRCLE_PROJECT_REPONAME-$CIRCLE_TAG.tar.gz"
-          bucket: "s3://mattermost-plugins-ci/release/"
-
-  deploy-release-github:
+  release-github:
     docker:
       - image: cibuilds/github:0.13
     steps:
       - attach_workspace:
-          at: dist
+          at: /tmp/artifacts
       - run:
           name: "Publish Release on Github"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -b "$(< ./dist/release-notes.md)" -c ${CIRCLE_SHA1} -n ${CIRCLE_TAG} -delete ${CIRCLE_TAG} dist/*.tar.gz
-
-  test-MySQL57-Postgres10:
-    docker:
-      - image: cimg/go:1.18.1-node
-      - image: cimg/postgres:10.17
-        command: "postgres -N 200"
-        environment:
-          POSTGRES_USER: mmuser
-          POSTGRES_DB: mattermost_test
-      - image: cimg/mysql:5.7
-        environment:
-          MYSQL_ROOT_PASSWORD: mostest
-          MYSQL_DATABASE: mattermost_test
-          MYSQL_USER: mmuser
-          MYSQL_PASSWORD: mostest
-    executor:
-      name: default
-    steps:
-      - test-with-db
-
-  test-MySQL8-Postgres11:
-    docker:
-      - image: cimg/go:1.18.1-node
-      - image: cimg/postgres:11.13
-        command: "postgres -N 200"
-        environment:
-          POSTGRES_USER: mmuser
-          POSTGRES_DB: mattermost_test
-      - image: cimg/mysql:8.0
-        environment:
-          MYSQL_ROOT_PASSWORD: mostest
-          MYSQL_DATABASE: mattermost_test
-          MYSQL_USER: mmuser
-          MYSQL_PASSWORD: mostest
-    executor:
-      name: default
-    steps:
-      - test-with-db
-
-  test-MariaDB10-Postgres12:
-    docker:
-      - image: cimg/go:1.18.1-node
-      - image: cimg/postgres:12.9
-        command: "postgres -N 200"
-        environment:
-          POSTGRES_USER: mmuser
-          POSTGRES_DB: mattermost_test
-      - image: cimg/mariadb:10.6
-        environment:
-          MARIADB_ROOT_PASSWORD: mostest
-          MARIADB_DATABASE: mattermost_test
-          MARIADB_USER: mmuser
-          MARIADB_PASSWORD: mostest
-    executor:
-      name: default
-    steps:
-      - test-with-db
-
-  # "latest" db versions
-  test-MySQL8-Postgres14:
-    docker:
-      - image: cimg/go:1.18.1-node
-      - image: cimg/postgres:14.1
-        command: "postgres -N 200"
-        environment:
-          POSTGRES_HOST_AUTH_METHOD: trust
-          POSTGRES_USER: mmuser
-          POSTGRES_DB: mattermost_test
-      - image: cimg/mysql:8.0
-        environment:
-          MYSQL_ROOT_PASSWORD: mostest
-          MYSQL_DATABASE: mattermost_test
-          MYSQL_USER: mmuser
-          MYSQL_PASSWORD: mostest
-    executor:
-      name: default
-    steps:
-      - test-with-db
-
-  e2e-cypress-tests-cloud:
-    resource_class: xlarge
-    docker:
-      - image: cimg/go:1.18.1-node
-        environment:
-          TEST_DATABASE_URL: postgres://mmuser:mostest@localhost:5432/mattermost_test
-      - image: cimg/postgres:10.17
-        environment:
-          POSTGRES_USER: mmuser
-          POSTGRES_PASSWORD: mostest
-          POSTGRES_DB: mattermost_test
-      - image: mattermost/inbucket:release-1.2.0
-      - image: minio/minio:RELEASE.2019-10-11T00-38-09Z
-        command: "server /data"
-        environment:
-          MINIO_ACCESS_KEY: minioaccesskey
-          MINIO_SECRET_KEY: miniosecretkey
-          MINIO_SSE_MASTER_KEY: "my-minio-key:6368616e676520746869732070617373776f726420746f206120736563726574"
-      - image: mattermost/mattermost-elasticsearch-docker:7.0.0
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-        environment:
-          http.host: "0.0.0.0"
-          http.port: 9200
-          http.cors.enabled: "true"
-          http.cors.allow-origin: "http://localhost:1358,http://127.0.0.1:1358"
-          http.cors.allow-headers: "X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization"
-          http.cors.allow-credentials: "true"
-          transport.host: "127.0.0.1"
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-      - image: mattermost/mm-ee-test:$MM_DOCKER_IMAGE_TAG
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-        environment:
-          DB_HOST: localhost
-          DB_PORT_NUMBER: 5432
-          MM_DBNAME: mattermost_test
-          MM_USERNAME: mmuser
-          MM_PASSWORD: mostest
-          CI_INBUCKET_HOST: localhost
-          CI_INBUCKET_PORT: 10080
-          CI_MINIO_HOST: minio
-          IS_CI: true
-          MM_CLUSTERSETTINGS_READONLYCONFIG: false
-          MM_EMAILSETTINGS_SMTPSERVER: localhost
-          MM_EMAILSETTINGS_SMTPPORT: 10025
-          MM_ELASTICSEARCHSETTINGS_CONNECTIONURL: http://localhost:9200
-          MM_EXPERIMENTALSETTINGS_USENEWSAMLLIBRARY: true
-          MM_SQLSETTINGS_DATASOURCE: "postgres://mmuser:mostest@localhost:5432/mattermost_test?sslmode=disable&connect_timeout=10"
-          MM_SQLSETTINGS_DRIVERNAME: postgres
-          MM_PLUGINSETTINGS_ENABLEUPLOADS: true
-          MM_SERVICESETTINGS_SITEURL: http://localhost:8065
-          MM_PLUGINSETTINGS_AUTOMATICPREPACKAGEDPLUGINS: false
-          MM_ANNOUNCEMENTSETTINGS_ADMINNOTICESENABLED: false
-          MM_SERVICESETTINGS_ENABLELEGACYSIDEBAR: true
-          MM_TEAMSETTINGS_MAXUSERSPERTEAM: 10000
-          MM_SERVICESETTINGS_ENABLEONBOARDINGFLOW: false
-    environment:
-      MM_DOCKER_IMAGE_TAG: prerelease
-      TYPE: NONE
-      PULL_REQUEST:
-      BROWSER: chrome
-      HEADLESS: true
-      DASHBOARD_ENABLE: false
-      FULL_REPORT: false
-      MM_SERVICESETTINGS_SITEURL: http://localhost:8065
-      MM_ADMIN_USERNAME: sysadmin
-      MM_ADMIN_PASSWORD: Sys@dmin-sample1
-      CYPRESS_serverEdition: Cloud
-    parallelism: 4
-    steps:
-      - run-e2e-tests
-
-  e2e-cypress-tests-master:
-    resource_class: xlarge
-    docker:
-      - image: cimg/go:1.18.1-node
-        environment:
-          TEST_DATABASE_URL: postgres://mmuser:mostest@localhost:5432/mattermost_test
-      - image: cimg/postgres:10.17
-        environment:
-          POSTGRES_USER: mmuser
-          POSTGRES_PASSWORD: mostest
-          POSTGRES_DB: mattermost_test
-      - image: mattermost/inbucket:release-1.2.0
-      - image: minio/minio:RELEASE.2019-10-11T00-38-09Z
-        command: "server /data"
-        environment:
-          MINIO_ACCESS_KEY: minioaccesskey
-          MINIO_SECRET_KEY: miniosecretkey
-          MINIO_SSE_MASTER_KEY: "my-minio-key:6368616e676520746869732070617373776f726420746f206120736563726574"
-      - image: mattermost/mattermost-elasticsearch-docker:7.0.0
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-        environment:
-          http.host: "0.0.0.0"
-          http.port: 9200
-          http.cors.enabled: "true"
-          http.cors.allow-origin: "http://localhost:1358,http://127.0.0.1:1358"
-          http.cors.allow-headers: "X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization"
-          http.cors.allow-credentials: "true"
-          transport.host: "127.0.0.1"
-          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
-      - image: mattermost/mattermost-enterprise-edition:$MM_DOCKER_IMAGE_TAG
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-        environment:
-          DB_HOST: localhost
-          DB_PORT_NUMBER: 5432
-          MM_DBNAME: mattermost_test
-          MM_USERNAME: mmuser
-          MM_PASSWORD: mostest
-          CI_INBUCKET_HOST: localhost
-          CI_INBUCKET_PORT: 10080
-          CI_MINIO_HOST: minio
-          IS_CI: true
-          MM_CLUSTERSETTINGS_READONLYCONFIG: false
-          MM_EMAILSETTINGS_SMTPSERVER: localhost
-          MM_EMAILSETTINGS_SMTPPORT: 10025
-          MM_ELASTICSEARCHSETTINGS_CONNECTIONURL: http://localhost:9200
-          MM_EXPERIMENTALSETTINGS_USENEWSAMLLIBRARY: true
-          MM_SQLSETTINGS_DATASOURCE: "postgres://mmuser:mostest@localhost:5432/mattermost_test?sslmode=disable&connect_timeout=10"
-          MM_SQLSETTINGS_DRIVERNAME: postgres
-          MM_PLUGINSETTINGS_ENABLEUPLOADS: true
-          MM_SERVICESETTINGS_SITEURL: http://localhost:8065
-          MM_PLUGINSETTINGS_AUTOMATICPREPACKAGEDPLUGINS: false
-          MM_ANNOUNCEMENTSETTINGS_ADMINNOTICESENABLED: false
-          MM_SERVICESETTINGS_ENABLELEGACYSIDEBAR: true
-          MM_TEAMSETTINGS_MAXUSERSPERTEAM: 10000
-          MM_FEATUREFLAGS_GLOBALHEADER: true
-          MM_SERVICESETTINGS_ENABLEONBOARDINGFLOW: false
-    environment:
-      MM_DOCKER_IMAGE_TAG: master
-      TYPE: NONE
-      PULL_REQUEST:
-      BROWSER: chrome
-      HEADLESS: true
-      DASHBOARD_ENABLE: false
-      FULL_REPORT: false
-      MM_SERVICESETTINGS_SITEURL: http://localhost:8065
-      MM_ADMIN_USERNAME: sysadmin
-      MM_ADMIN_PASSWORD: Sys@dmin-sample1
-      CYPRESS_serverEdition: E20
-    parallelism: 4
-    steps:
-      - run-e2e-tests
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} /tmp/artifacts/
 
 workflows:
   version: 2
   ci:
     jobs:
-      - lint
-      - test-MySQL57-Postgres10
-      - test-MySQL8-Postgres11
-      - test-MariaDB10-Postgres12
-      - test-MySQL8-Postgres14
-      - e2e-cypress-tests-cloud
-      - e2e-cypress-tests-master
+      - lint:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       - build:
-          context: mattermost-plugin-incident-response-production
-          filters:
-            tags:
-              only: /^v.*/
-      - deploy-ci:
-          context: plugin-ci
-          filters:
-            branches:
-              only: master
           requires:
             - lint
-            - test-MySQL57-Postgres10
-            - test-MySQL8-Postgres11
-            - test-MariaDB10-Postgres12
-            - test-MySQL8-Postgres14
-            #- e2e-cypress-tests-cloud
-            - build
-      - deploy-release:
-          context: plugin-ci
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+
+      - release-github:
+          context: wellsite-server-rebranding-automation
           filters:
             tags:
               only: /^v.*/
@@ -519,24 +141,4 @@ workflows:
               ignore: /.*/
           requires:
             - lint
-            - test-MySQL57-Postgres10
-            - test-MySQL8-Postgres11
-            - test-MariaDB10-Postgres12
-            - test-MySQL8-Postgres14
-            # - e2e-cypress-tests-cloud
-            - build
-      - deploy-release-github:
-          context: matterbuild-github-token
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-          requires:
-            - lint
-            - test-MySQL57-Postgres10
-            - test-MySQL8-Postgres11
-            - test-MariaDB10-Postgres12
-            - test-MySQL8-Postgres14
-            # - e2e-cypress-tests-cloud
             - build
