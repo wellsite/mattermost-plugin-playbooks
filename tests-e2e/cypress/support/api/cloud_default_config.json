@@ -34,7 +34,7 @@
         "CollapsedThreads": "default_off"
     },
     "TeamSettings": {
-        "SiteName": "Mattermost",
+        "SiteName": "Wellsite",
         "MaxUsersPerTeam": 2000,
         "EnableUserCreation": true,
         "EnableOpenServer": true,
