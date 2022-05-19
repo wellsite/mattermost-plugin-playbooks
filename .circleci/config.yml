@@ -97,19 +97,17 @@ jobs:
             make dist
       - save:
           filename: "*.tar.gz"
-      - save:
-          filename: "*.zip"
       - persist_to_workspace:
           root: /tmp/artifacts
           paths:
              - .
 
-  deploy-release-github:
+  release-github:
     docker:
       - image: cibuilds/github:0.13
     steps:
       - attach_workspace:
-          at: dist
+          at: /tmp/artifacts
       - run:
           name: "Publish Release on Github"
           command: |
@@ -124,18 +122,13 @@ workflows:
           requires:
             - lint
 
-      # - deploy-release-github:
-      #     context: matterbuild-github-token
-      #     filters:
-      #       tags:
-      #         only: /^v.*/
-      #       branches:
-      #         ignore: /.*/
-      #     requires:
-      #       - lint
-      #       - test-MySQL57-Postgres10
-      #       - test-MySQL8-Postgres11
-      #       - test-MariaDB10-Postgres12
-      #       - test-MySQL8-Postgres14
-      #       # - e2e-cypress-tests-cloud
-      #       - build
+      - release-github:
+          context: wellsite-server-rebranding-automation
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - lint
+            - build
