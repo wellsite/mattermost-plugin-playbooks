@@ -81,22 +81,14 @@ jobs:
           name: Building Plugin Bundle
           command: |
             make dist
-      - run:
-          name: Generating Release Notes
-          command: |
-            printf "Supported Mattermost Server Versions: **$(cat plugin.json | jq .min_server_version -r)+** \n## Enhancements\n\n## Fixes\n"  >> dist/release-notes.md
-            if [[ $(git tag -l | wc -l) -eq 1 ]]; then
-              git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git rev-list --max-parents=0 HEAD) HEAD >> dist/release-notes.md
-            else
-              git log --pretty='format:- %h %s' --abbrev-commit --no-decorate --no-color $(git describe --tags --abbrev=0 $(git describe --tags --abbrev=0)^)..HEAD >> dist/release-notes.md
-            fi
+      - save:
+          filename: "*.tar.gz"
+      - save:
+          filename: "*.zip"
       - persist_to_workspace:
-          root: dist
+          root: /tmp/artifacts
           paths:
-            - "*.tar.gz"
-            - "release-notes.md"
-      - store_artifacts:
-          path: dist
+             - .
 
   deploy-release-github:
     docker:
