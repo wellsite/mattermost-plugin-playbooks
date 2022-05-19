@@ -36,6 +36,20 @@ commands:
           paths:
             - ./webapp/node_modules
 
+  save:
+    description: "Save binaries artifacts"
+    parameters:
+      filename:
+        type: string
+    steps:
+      - run:
+          name: Copying artifacts
+          command: |
+            mkdir -p /tmp/artifacts
+            cp dist/<<parameters.filename>> /tmp/artifacts
+      - store_artifacts:
+          path: /tmp/artifacts
+
 jobs:
   lint:
     executor:
