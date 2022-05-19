@@ -121,6 +121,11 @@ workflows:
       - build:
           requires:
             - lint
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
 
       - release-github:
           context: wellsite-server-rebranding-automation
