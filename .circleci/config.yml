@@ -115,11 +115,8 @@ workflows:
     jobs:
       - lint
       - build:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
+          requires:
+            - lint
 
       # - deploy-release-github:
       #     context: matterbuild-github-token
