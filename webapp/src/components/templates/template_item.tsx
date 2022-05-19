@@ -51,7 +51,6 @@ const Item = styled.div`
     border-radius: 8px;
     box-sizing: border-box;
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.08);
-    aspect-ratio: 284 / 300;
     max-width: 360px;
     &:not(:hover):not(:focus) {
         ${HoverPanel} {
@@ -98,7 +97,7 @@ const Description = styled.p`
 `;
 
 const Detail = styled.div`
-    padding: 20px 20px 60px;
+    padding: 20px 20px;
     height: auto;
 `;
 
@@ -148,14 +147,14 @@ const TemplateItem = ({
             <Detail>
                 <Title>{title}</Title>
                 <Description>{description}</Description>
-                {author && (
+                {/* {author && (
                     <Tooltip
                         id={`${title}_author_usedby`}
                         content={formatMessage({defaultMessage: 'Used by'})}
                     >
                         <Author>{author}</Author>
                     </Tooltip>
-                )}
+                )} */}
             </Detail>
         </Item>
     );
